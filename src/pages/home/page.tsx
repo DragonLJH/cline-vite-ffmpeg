@@ -56,14 +56,14 @@ const HomePage: React.FC = () => {
           <div className="flex justify-center gap-4 flex-wrap">
             <a
               href="/counter"
-              className="inline-flex items-center px-8 py-4 bg-[var(--gradient-secondary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)]"
+              className="inline-flex items-center px-8 py-4 bg-[var(--btn-primary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:bg-[var(--btn-primary-hover)]"
             >
               <span className="text-2xl mr-2">🔢</span>
               计数器页面
             </a>
             <a
               href="/about"
-              className="inline-flex items-center px-8 py-4 bg-[var(--gradient-primary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)]"
+              className="inline-flex items-center px-8 py-4 bg-[var(--btn-primary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:bg-[var(--btn-primary-hover)]"
             >
               <span className="text-2xl mr-2">ℹ️</span>
               关于页面

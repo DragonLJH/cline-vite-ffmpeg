@@ -5,9 +5,9 @@ const CounterPage: React.FC = () => {
   const { count, increment, decrement, reset, incrementBy, decrementBy } = useCounterStore()
 
   const getStatusColor = () => {
-    if (count > 0) return { background: '#f0fdf4', color: '#16a34a' }
-    if (count < 0) return { background: '#fef2f2', color: '#dc2626' }
-    return { background: '#f9fafb', color: '#6b7280' }
+    if (count > 0) return 'bg-[var(--bg-tertiary)] text-[var(--btn-primary)]'
+    if (count < 0) return 'bg-[var(--bg-tertiary)] text-red-600'
+    return 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
   }
 
   const getStatusText = () => {
@@ -17,189 +17,74 @@ const CounterPage: React.FC = () => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      padding: '2rem'
-    }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div className="min-h-screen bg-[var(--bg-primary)] p-8">
+      <div className="max-w-4xl mx-auto">
         {/* 头部 */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h1 style={{
-            fontSize: '3rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            color: 'var(--text-primary)',
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold mb-4 text-[var(--text-primary)] bg-[var(--gradient-primary)] bg-clip-text text-transparent">
             🔢 计数器
           </h1>
-          <p style={{
-            fontSize: '1.25rem',
-            color: 'var(--text-secondary)'
-          }}>
+          <p className="text-xl text-[var(--text-secondary)]">
             使用 Zustand 状态管理的计数器示例
           </p>
         </div>
 
         {/* 计数器显示 */}
-        <div style={{
-          background: 'linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6)',
-          padding: '3rem',
-          borderRadius: '24px',
-          textAlign: 'center',
-          color: 'white',
-          marginBottom: '2rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{
-            fontSize: '5rem',
-            fontWeight: '900',
-            marginBottom: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-          }}>
+        <div className="bg-gradient-to-br from-emerald-500 via-blue-500 to-purple-500 p-12 rounded-3xl text-center text-white mb-8 shadow-2xl">
+          <div className="text-9xl font-extrabold mb-4 drop-shadow-2xl">
             {count}
           </div>
-          <p style={{ fontSize: '1.25rem', opacity: 0.9 }}>当前计数</p>
-          <div style={{
-            ...getStatusColor(),
-            display: 'inline-block',
-            marginTop: '1rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '20px',
-            fontSize: '0.875rem',
-            fontWeight: '600'
-          }}>
+          <p className="text-2xl opacity-90 mb-6">当前计数</p>
+          <div className={`inline-block mt-4 px-6 py-3 ${getStatusColor()} rounded-full text-sm font-semibold transition-all duration-300`}>
             {getStatusText()}
           </div>
         </div>
 
         {/* 操作按钮 */}
-        <div style={{
-          background: 'var(--bg-card)',
-          padding: '2rem',
-          borderRadius: '16px',
-          boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border-primary)',
-          marginBottom: '2rem'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: '2rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)] mb-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[var(--text-primary)]">
             🎮 操作面板
           </h2>
 
           {/* 基本操作 */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
+          <div className="flex justify-center items-center gap-6 mb-8">
             <button
               onClick={decrement}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#dc2626',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              className="px-8 py-4 bg-red-600 text-white border-none rounded-xl font-bold text-lg cursor-pointer transition-all duration-200 hover:bg-red-700 hover:-translate-y-2 hover:shadow-xl"
             >
               ➖ 减少
             </button>
             <button
               onClick={reset}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              className="px-8 py-4 bg-amber-500 text-white border-none rounded-xl font-bold text-lg cursor-pointer transition-all duration-200 hover:bg-amber-600 hover:-translate-y-2 hover:shadow-xl"
             >
               🔄 重置
             </button>
             <button
               onClick={increment}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              className="px-8 py-4 bg-blue-600 text-white border-none rounded-xl font-bold text-lg cursor-pointer transition-all duration-200 hover:bg-blue-700 hover:-translate-y-2 hover:shadow-xl"
             >
               ➕ 增加
             </button>
           </div>
 
           {/* 批量操作 */}
-          <div style={{ textAlign: 'center' }}>
-            <h3 style={{
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              marginBottom: '1rem',
-              color: 'var(--text-primary)'
-            }}>
+          <div className="text-center">
+            <h3 className="text-2xl font-semibold mb-6 text-[var(--text-primary)]">
               批量操作
             </h3>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
               {[5, 10].map(num => (
                 <React.Fragment key={num}>
                   <button
                     onClick={() => incrementBy(num)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    className="px-6 py-3 bg-emerald-600 text-white border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-200 hover:bg-emerald-700 hover:-translate-y-1"
                   >
                     +{num}
                   </button>
                   <button
                     onClick={() => decrementBy(num)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: '#dc2626',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    className="px-6 py-3 bg-red-600 text-white border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-200 hover:bg-red-700 hover:-translate-y-1"
                   >
                     -{num}
                   </button>
@@ -210,79 +95,30 @@ const CounterPage: React.FC = () => {
         </div>
 
         {/* 状态信息 */}
-        <div style={{
-          background: 'var(--bg-card)',
-          padding: '2rem',
-          borderRadius: '16px',
-          boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: '2rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[var(--text-primary)]">
             📊 状态信息
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem'
-          }}>
-            <div style={{
-              background: 'var(--bg-secondary)',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              textAlign: 'center',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                marginBottom: '0.5rem',
-                color: 'var(--text-primary)'
-              }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[var(--bg-secondary)] p-6 rounded-xl border border-[var(--border-primary)] text-center">
+              <div className="text-4xl font-bold mb-2 text-[var(--text-primary)]">
                 {count}
               </div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>当前值</div>
+              <div className="text-sm text-[var(--text-secondary)]">当前值</div>
             </div>
 
-            <div style={{
-              background: 'var(--bg-secondary)',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              textAlign: 'center',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                marginBottom: '0.5rem',
-                ...getStatusColor()
-              }}>
+            <div className="bg-[var(--bg-secondary)] p-6 rounded-xl border border-[var(--border-primary)] text-center">
+              <div className={`text-4xl font-bold mb-2 ${getStatusColor()}`}>
                 {getStatusText()}
               </div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>状态</div>
+              <div className="text-sm text-[var(--text-secondary)]">状态</div>
             </div>
 
-            <div style={{
-              background: 'var(--bg-secondary)',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              textAlign: 'center',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                marginBottom: '0.5rem',
-                color: count >= -10 && count <= 10 ? 'var(--btn-primary)' : '#dc2626'
-              }}>
+            <div className="bg-[var(--bg-secondary)] p-6 rounded-xl border border-[var(--border-primary)] text-center">
+              <div className={`text-4xl font-bold mb-2 ${count >= -10 && count <= 10 ? 'text-[var(--btn-primary)]' : 'text-red-600'}`}>
                 {count >= -10 && count <= 10 ? '✓' : '⚠️'}
               </div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>范围状态</div>
+              <div className="text-sm text-[var(--text-secondary)]">范围状态</div>
             </div>
           </div>
         </div>

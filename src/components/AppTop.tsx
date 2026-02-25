@@ -196,14 +196,14 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
           <div className="flex items-center gap-0.5">
             <button
               onClick={handleMinimize}
-              className="w-8 h-6 bg-transparent border-none text-white cursor-pointer flex items-center justify-center rounded-sm text-xs transition-colors hover:bg-white/10"
+              className="w-8 h-6 bg-transparent border-none text-[var(--text-primary)] cursor-pointer flex items-center justify-center rounded-sm text-xs transition-colors hover:bg-[var(--bg-hover)]"
               title="最小化"
             >
               ─
             </button>
             <button
               onClick={handleMaximize}
-              className="w-8 h-6 bg-transparent border-none text-white cursor-pointer flex items-center justify-center rounded-sm text-xs transition-colors hover:bg-white/10"
+              className="w-8 h-6 bg-transparent border-none text-[var(--text-primary)] cursor-pointer flex items-center justify-center rounded-sm text-xs transition-colors hover:bg-[var(--bg-hover)]"
               title={isMaximized ? '还原' : '最大化'}
             >
               {isMaximized ? '❐' : '□'}

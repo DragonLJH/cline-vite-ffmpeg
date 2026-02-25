@@ -30,85 +30,37 @@ const AboutPage: React.FC = () => {
   ]
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      padding: '2rem'
-    }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="min-h-screen bg-[var(--bg-primary)] p-8">
+      <div className="max-w-4xl mx-auto">
         {/* 头部 */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h1 style={{
-            fontSize: '3rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            color: 'var(--text-primary)',
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold mb-4 text-[var(--text-primary)] bg-[var(--gradient-primary)] bg-clip-text text-transparent">
             ℹ️ 关于我们
           </h1>
-          <p style={{
-            fontSize: '1.25rem',
-            color: 'var(--text-secondary)',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
+          <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
             这是一个使用现代技术栈构建的桌面应用程序
           </p>
         </div>
 
         {/* 技术栈 */}
-        <div style={{ marginBottom: '3rem' }}>
-          <h2 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: '2rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="mb-12">
+          <h2 className="text-4xl font-bold text-center mb-8 text-[var(--text-primary)]">
             🛠️ 技术栈
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '1.5rem'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {techStack.map((category, index) => (
               <div
                 key={index}
-                style={{
-                  background: 'var(--bg-card)',
-                  padding: '1.5rem',
-                  borderRadius: '12px',
-                  boxShadow: 'var(--shadow-md)',
-                  border: '1px solid var(--border-primary)'
-                }}
+                className="bg-[var(--bg-card)] p-6 rounded-xl shadow-[var(--shadow-md)] border border-[var(--border-primary)]"
               >
-                <h3 style={{
-                  marginTop: 0,
-                  marginBottom: '1rem',
-                  color: 'var(--text-primary)',
-                  fontSize: '1.125rem',
-                  fontWeight: '600'
-                }}>
+                <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">
                   {category.title}
                 </h3>
-                <ul style={{
-                  listStyle: 'none',
-                  padding: 0,
-                  margin: 0
-                }}>
+                <ul className="space-y-2">
                   {category.items.map((item, itemIndex) => (
                     <li
                       key={itemIndex}
-                      style={{
-                        margin: '0.5rem 0',
-                        padding: '0.25rem 0',
-                        color: 'var(--text-secondary)'
-                      }}
+                      className="text-[var(--text-secondary)]"
                     >
                       {item}
                     </li>
@@ -120,154 +72,63 @@ const AboutPage: React.FC = () => {
         </div>
 
         {/* 主要特性 */}
-        <div style={{
-          background: 'var(--bg-secondary)',
-          padding: '2rem',
-          borderRadius: '16px',
-          borderLeft: '4px solid var(--btn-primary)'
-        }}>
-          <h2 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            marginBottom: '1.5rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="bg-[var(--bg-secondary)] p-8 rounded-2xl border-l-4 border-[var(--btn-primary)] mb-12">
+          <h2 className="text-4xl font-bold mb-8 text-[var(--text-primary)]">
             ✨ 主要特性
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1rem'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((feature, index) => (
               <div
                 key={index}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem',
-                  background: 'var(--bg-card)',
-                  borderRadius: '8px',
-                  boxShadow: 'var(--shadow-sm)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-primary)'
-                }}
+                className="flex items-center p-4 bg-[var(--bg-card)] rounded-lg shadow-[var(--shadow-sm)] border border-[var(--border-primary)] text-[var(--text-primary)]"
               >
-                <span style={{ marginRight: '0.75rem' }}>{feature}</span>
+                <span className="mr-3">{feature}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* 系统信息和 API 演示 */}
-        <div style={{
-          marginTop: '3rem',
-          textAlign: 'center',
-          padding: '2rem',
-          background: 'var(--bg-card)',
-          borderRadius: '12px',
-          boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <h3 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="mt-12 text-center p-8 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
+          <h3 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
             🔧 系统信息和 API 演示
           </h3>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2rem'
-          }}>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 {window.electronAPI?.platform || '未知'}
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 操作系统
               </div>
             </div>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 {window.electronAPI?.version || '未知'}
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 Electron 版本
               </div>
             </div>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 {window.electronAPI?.appInfo.isDev ? '开发环境' : '生产环境'}
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 运行模式
               </div>
             </div>
           </div>
 
           {/* API 功能演示 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2rem'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <button
               onClick={() => window.electronAPI?.showNotification({
                 title: '测试通知',
                 body: '这是一个来自 Electron 的通知！'
               })}
-              style={{
-                padding: '0.75rem 1rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
-              }}
+              className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
               📢 显示通知
             </button>
@@ -281,16 +142,7 @@ const AboutPage: React.FC = () => {
                   alert(`选择了文件: ${result[0]}`)
                 }
               }}
-              style={{
-                padding: '0.75rem 1rem',
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
-              }}
+              className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
               📁 打开文件
             </button>
@@ -299,118 +151,49 @@ const AboutPage: React.FC = () => {
                 const text = window.electronAPI?.clipboard.readText() || '剪贴板为空'
                 alert(`剪贴板内容: ${text}`)
               }}
-              style={{
-                padding: '0.75rem 1rem',
-                background: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
-              }}
+              className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
               📋 读取剪贴板
             </button>
           </div>
 
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.875rem'
-          }}>
+          <p className="text-[var(--text-secondary)] text-sm">
             通过 Preload API 安全地访问系统功能，无需 nodeIntegration
           </p>
         </div>
 
         {/* 项目信息 */}
-        <div style={{
-          marginTop: '3rem',
-          textAlign: 'center',
-          padding: '2rem',
-          background: 'var(--bg-card)',
-          borderRadius: '12px',
-          boxShadow: 'var(--shadow-lg)',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <h3 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            color: 'var(--text-primary)'
-          }}>
+        <div className="mt-12 text-center p-8 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
+          <h3 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
             📂 项目信息
           </h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1.5rem'
-          }}>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 v1.0.0
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 版本
               </div>
             </div>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 React + TS
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 技术栈
               </div>
             </div>
-            <div style={{
-              padding: '1rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '8px',
-              border: '1px solid var(--border-primary)'
-            }}>
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: 'var(--btn-primary)'
-              }}>
+            <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+              <div className="text-2xl font-bold text-[var(--btn-primary)]">
                 Electron
               </div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-              }}>
+              <div className="text-sm text-[var(--text-secondary)]">
                 运行环境
               </div>
             </div>
           </div>
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.875rem'
-          }}>
+          <p className="text-[var(--text-secondary)] text-sm">
             一个现代化的桌面应用程序示例项目
           </p>
         </div>

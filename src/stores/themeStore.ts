@@ -23,7 +23,7 @@ export const themes = {
     '--text-primary': '#1e293b',
     '--text-secondary': '#64748b',
     '--text-muted': '#94a3b8',
-    '--text-inverse': '#ffffff',
+    '--text-inverse': '#0f172a',
 
     // 边框颜色
     '--border-primary': '#e2e8f0',
@@ -57,7 +57,7 @@ export const themes = {
     '--text-primary': '#f8fafc',
     '--text-secondary': '#cbd5e1',
     '--text-muted': '#64748b',
-    '--text-inverse': '#0f172a',
+    '--text-inverse': '#ffffff',
 
     // 边框颜色
     '--border-primary': '#334155',
