@@ -1,32 +1,34 @@
 import React from 'react'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AboutPage: React.FC = () => {
+  const { t } = useTranslation()
   const techStack = [
     {
-      title: '前端框架',
-      items: ['⚛️ React 19', '🔷 TypeScript', '🧭 React Router v6']
+      title: t('pages.about.techCategories.frontend'),
+      items: [t('pages.about.techItems.react'), t('pages.about.techItems.typescript'), t('pages.about.techItems.router')]
     },
     {
-      title: '构建工具',
-      items: ['⚡ Vite', '📦 Electron Builder']
+      title: t('pages.about.techCategories.build'),
+      items: [t('pages.about.techItems.vite'), t('pages.about.techItems.electronBuilder')]
     },
     {
-      title: '状态管理',
-      items: ['📦 Zustand', '🔄 React Hooks']
+      title: t('pages.about.techCategories.state'),
+      items: [t('pages.about.techItems.zustand'), t('pages.about.techItems.hooks')]
     },
     {
-      title: '样式系统',
-      items: ['🎨 Tailwind CSS', '🛠️ SCSS', '📱 响应式设计']
+      title: t('pages.about.techCategories.styling'),
+      items: [t('pages.about.techItems.tailwind'), t('pages.about.techItems.scss'), t('pages.about.techItems.responsive')]
     }
   ]
 
   const features = [
-    '🚀 快速的热重载开发体验',
-    '📱 响应式设计，支持多种屏幕尺寸',
-    '🔒 类型安全的 TypeScript 支持',
-    '🗂️ 模块化的项目结构',
-    '🎨 现代化的 UI 设计',
-    '⚡ 优化的构建和打包流程'
+    t('pages.about.features.0'),
+    t('pages.about.features.1'),
+    t('pages.about.features.2'),
+    t('pages.about.features.3'),
+    t('pages.about.features.4'),
+    t('pages.about.features.5')
   ]
 
   return (
@@ -35,17 +37,17 @@ const AboutPage: React.FC = () => {
         {/* 头部 */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 text-[var(--text-primary)] bg-[var(--gradient-primary)] bg-clip-text text-transparent">
-            ℹ️ 关于我们
+            ℹ️ {t('pages.about.title')}
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-            这是一个使用现代技术栈构建的桌面应用程序
+            {t('pages.about.description')}
           </p>
         </div>
 
         {/* 技术栈 */}
         <div className="mb-12">
           <h2 className="text-4xl font-bold text-center mb-8 text-[var(--text-primary)]">
-            🛠️ 技术栈
+            🛠️ {t('pages.about.techStackTitle')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {techStack.map((category, index) => (
@@ -74,7 +76,7 @@ const AboutPage: React.FC = () => {
         {/* 主要特性 */}
         <div className="bg-[var(--bg-secondary)] p-8 rounded-2xl border-l-4 border-[var(--btn-primary)] mb-12">
           <h2 className="text-4xl font-bold mb-8 text-[var(--text-primary)]">
-            ✨ 主要特性
+            ✨ {t('pages.about.featuresTitle')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((feature, index) => (
@@ -91,32 +93,32 @@ const AboutPage: React.FC = () => {
         {/* 系统信息和 API 演示 */}
         <div className="mt-12 text-center p-8 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
           <h3 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
-            🔧 系统信息和 API 演示
+            🔧 {t('pages.about.systemInfoTitle')}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                {window.electronAPI?.platform || '未知'}
+                {window.electronAPI?.platform || t('pages.about.systemInfo.unknown')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                操作系统
+                {t('pages.about.systemInfo.os')}
               </div>
             </div>
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                {window.electronAPI?.version || '未知'}
+                {window.electronAPI?.version || t('pages.about.systemInfo.unknown')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                Electron 版本
+                {t('pages.about.systemInfo.electronVersion')}
               </div>
             </div>
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                {window.electronAPI?.appInfo.isDev ? '开发环境' : '生产环境'}
+                {window.electronAPI?.appInfo.isDev ? t('pages.about.systemInfo.dev') : t('pages.about.systemInfo.production')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                运行模式
+                {t('pages.about.systemInfo.mode')}
               </div>
             </div>
           </div>
@@ -125,17 +127,17 @@ const AboutPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <button
               onClick={() => window.electronAPI?.showNotification({
-                title: '测试通知',
-                body: '这是一个来自 Electron 的通知！'
+                title: t('api.notification.title'),
+                body: t('api.notification.body')
               })}
               className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
-              📢 显示通知
+              📢 {t('pages.about.apiDemo.notification')}
             </button>
             <button
               onClick={async () => {
                 const result = await window.electronAPI?.openFileDialog({
-                  title: '选择一个文件',
+                  title: t('pages.about.apiDemo.fileDialogTitle'),
                   filters: [{ name: '所有文件', extensions: ['*'] }]
                 })
                 if (result && result.length > 0) {
@@ -144,57 +146,57 @@ const AboutPage: React.FC = () => {
               }}
               className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
-              📁 打开文件
+              📁 {t('pages.about.apiDemo.fileDialog')}
             </button>
             <button
               onClick={() => {
-                const text = window.electronAPI?.clipboard.readText() || '剪贴板为空'
-                alert(`剪贴板内容: ${text}`)
+                const text = window.electronAPI?.clipboard.readText() || t('pages.about.apiDemo.clipboardEmpty')
+                alert(`${t('pages.about.apiDemo.clipboardContent').replace('{text}', text)}`)
               }}
               className="px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] border-none rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:-translate-y-1"
             >
-              📋 读取剪贴板
+              📋 {t('pages.about.apiDemo.clipboard')}
             </button>
           </div>
 
           <p className="text-[var(--text-secondary)] text-sm">
-            通过 Preload API 安全地访问系统功能，无需 nodeIntegration
+            {t('pages.about.systemInfo.description')}
           </p>
         </div>
 
         {/* 项目信息 */}
         <div className="mt-12 text-center p-8 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
           <h3 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
-            📂 项目信息
+            📂 {t('pages.about.projectInfoTitle')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                v1.0.0
+                {t('pages.about.projectInfo.versionValue')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                版本
+                {t('pages.about.projectInfo.version')}
               </div>
             </div>
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                React + TS
+                {t('pages.about.projectInfo.techStackValue')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                技术栈
+                {t('pages.about.projectInfo.techStack')}
               </div>
             </div>
             <div className="p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               <div className="text-2xl font-bold text-[var(--btn-primary)]">
-                Electron
+                {t('pages.about.projectInfo.runtimeValue')}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                运行环境
+                {t('pages.about.projectInfo.runtime')}
               </div>
             </div>
           </div>
           <p className="text-[var(--text-secondary)] text-sm">
-            一个现代化的桌面应用程序示例项目
+            {t('pages.about.projectInfo.description')}
           </p>
         </div>
       </div>

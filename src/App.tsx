@@ -1,7 +1,8 @@
 import React, { Suspense, useState, useEffect, useMemo } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom'
 import AppTop from './components/AppTop'
-import { generateRoutes, getRoutesWithMeta, RouteConfig, getNavigationItems } from './router'
+import { generateRoutes, getRoutesWithMeta, RouteConfig, getNavigationItems, getLocalizedNavigationItems } from './router'
+import { useTranslation } from './hooks/useTranslation'
 // 导入主题系统，确保在应用启动时初始化
 import './stores/themeStore'
 import './App.scss'
@@ -25,13 +26,18 @@ const RouteWrapper: React.FC<{ route: RouteConfig }> = ({ route }) => {
 
 // 导航侧边栏组件
 const Sidebar: React.FC<{ routes: RouteConfig[] }> = ({ routes }) => {
+  const { t } = useTranslation()
   const location = useLocation()
   const initial = useMemo(() => location.pathname !== '/', [])
-  const [navItems, setNavItems] = useState<any[]>([])
-  useEffect(() => {
-    const items = getNavigationItems(routes)
-    setNavItems(items)
-  }, [routes])
+
+  const navItems = useMemo<any[]>(() => {
+    if (routes) {
+      const res = getNavigationItems(routes)
+      console.log('[navItems]', res)
+      return res
+    }
+    return []
+  }, [routes, t])
 
   const handleOpenInWindow = async (path: string, title: string) => {
     try {
@@ -46,13 +52,15 @@ const Sidebar: React.FC<{ routes: RouteConfig[] }> = ({ routes }) => {
       console.error('Failed to open window:', error)
     }
   }
+
   if (initial) return <></>
+
   return (
     <aside className="w-70 flex flex-col py-4 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)]">
       {/* 侧边栏头部 */}
       <div className="px-4 py-4 mb-4 border-b border-[var(--border-primary)]">
         <h2 className="m-0 text-xl font-semibold text-center text-[var(--text-primary)]">
-          🧭 页面导航
+          {t('components.sidebar.title')}
         </h2>
       </div>
 
@@ -67,13 +75,13 @@ const Sidebar: React.FC<{ routes: RouteConfig[] }> = ({ routes }) => {
                 : 'bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-primary)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5'
                 }`}
             >
-              {item.label}
+              {t(item.label)}
             </Link>
             {item.canOpenWindow && (
               <button
                 onClick={() => handleOpenInWindow(item.path, item.label.replace(/^[^\s]+\s/, ''))}
                 className="p-2 rounded-md cursor-pointer text-xs opacity-70 transition-all duration-200 w-8 h-8 flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-primary)] text-[var(--text-secondary)] hover:opacity-100 hover:bg-[var(--gradient-primary)] hover:text-[var(--text-inverse)]"
-                title="在新窗口中打开"
+                title={t('navigation.openInWindow')}
               >
                 🪟
               </button>

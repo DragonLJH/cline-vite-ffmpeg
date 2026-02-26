@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { RouteConfig, getNavigationItems } from '../router'
 import { useUserStore } from '../stores/userStore'
+import { useTranslation } from '../hooks/useTranslation'
 
 interface AppTopProps {
   routes?: RouteConfig[]
@@ -11,6 +12,7 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const userStore = useUserStore()
+  const { t } = useTranslation()
   const [isMaximized, setIsMaximized] = useState(false)
   const [platform, setPlatform] = useState<string>('')
 
@@ -143,7 +145,7 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
               Vite + React + Electron
             </div>
             <div className="text-xs opacity-80 leading-none">
-              现代化桌面应用
+              {t('pages.home.description')}
             </div>
           </div>
         </div>

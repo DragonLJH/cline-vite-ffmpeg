@@ -49,6 +49,9 @@ interface ElectronAPI {
   // 主题同步
   broadcastThemeChange: (theme: ThemeType) => void
 
+  // 语言同步
+  broadcastLanguageChange: (language: string) => void
+
   // 登录状态同步
   broadcastLoginSuccess: (userData: any) => Promise<boolean>
   onLoginSuccess: (callback: (userData: any) => void) => void

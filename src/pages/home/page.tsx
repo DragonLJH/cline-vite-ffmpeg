@@ -1,13 +1,15 @@
 import React from 'react'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const HomePage: React.FC = () => {
+  const { t } = useTranslation()
   const features = [
-    { icon: '⚡', name: 'Vite', desc: '快速的构建工具' },
-    { icon: '⚛️', name: 'React', desc: '用户界面库' },
-    { icon: '🔷', name: 'TypeScript', desc: '类型安全的 JavaScript' },
-    { icon: '🖥️', name: 'Electron', desc: '跨平台桌面应用' },
-    { icon: '🧭', name: 'React Router', desc: '页面路由系统' },
-    { icon: '📦', name: 'Zustand', desc: '轻量级状态管理' }
+    { icon: '⚡', name: 'Vite', desc: t('pages.home.features.vite.description') },
+    { icon: '⚛️', name: 'React', desc: t('pages.home.features.react.description') },
+    { icon: '🔷', name: 'TypeScript', desc: t('pages.home.features.typescript.description') },
+    { icon: '🖥️', name: 'Electron', desc: t('pages.home.features.electron.description') },
+    { icon: '🧭', name: 'React Router', desc: t('pages.home.features.router.description') },
+    { icon: '📦', name: 'Zustand', desc: t('pages.home.features.zustand.description') }
   ]
 
   return (
@@ -16,17 +18,17 @@ const HomePage: React.FC = () => {
         {/* 头部区域 */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 text-[var(--text-primary)] bg-[var(--gradient-primary)] bg-clip-text text-transparent">
-            🏠 首页
+            🏠 {t('pages.home.title')}
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-            欢迎来到 Vite + React + TypeScript + Electron 现代化桌面应用！
+            {t('pages.home.description')}
           </p>
         </div>
 
         {/* 功能特性网格 */}
         <div className="mb-12">
           <h2 className="text-4xl font-bold text-center mb-8 text-[var(--text-primary)]">
-            🎯 核心特性
+            🎯 {t('pages.home.featuresTitle')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
@@ -51,7 +53,7 @@ const HomePage: React.FC = () => {
         {/* 快速导航 */}
         <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
           <h2 className="text-4xl font-bold text-center mb-8 text-[var(--text-primary)]">
-            🧭 快速导航
+            🧭 {t('pages.home.quickNavTitle')}
           </h2>
           <div className="flex justify-center gap-4 flex-wrap">
             <a
@@ -59,14 +61,14 @@ const HomePage: React.FC = () => {
               className="inline-flex items-center px-8 py-4 bg-[var(--btn-primary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:bg-[var(--btn-primary-hover)]"
             >
               <span className="text-2xl mr-2">🔢</span>
-              计数器页面
+              {t('navigation.counter')}
             </a>
             <a
               href="/about"
               className="inline-flex items-center px-8 py-4 bg-[var(--btn-primary)] text-[var(--text-inverse)] no-underline rounded-xl font-semibold text-lg shadow-[var(--shadow-md)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:bg-[var(--btn-primary-hover)]"
             >
               <span className="text-2xl mr-2">ℹ️</span>
-              关于页面
+              {t('navigation.about')}
             </a>
           </div>
         </div>
@@ -74,7 +76,7 @@ const HomePage: React.FC = () => {
         {/* 底部信息 */}
         <div className="text-center mt-12">
           <p className="text-[var(--text-muted)]">
-            开始探索这个现代化桌面应用的功能吧！
+            {t('pages.home.exploreText')}
           </p>
         </div>
       </div>

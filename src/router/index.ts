@@ -22,6 +22,7 @@ export interface PageModule {
 
 // 动态路由配置接口
 export interface RouteConfig {
+  key: string;
   path: string
   component: React.LazyExoticComponent<React.ComponentType>
   meta?: PageMeta
@@ -30,6 +31,7 @@ export interface RouteConfig {
 
 // 使用 Vite 的 import.meta.glob 自动发现页面
 const pageModules = import.meta.glob('../pages/*/index.tsx') as Record<string, () => Promise<PageModule>>
+
 
 console.log('🔍 import.meta.glob 模式: ../pages/*/index.tsx')
 console.log('🔍 发现的页面模块数量:', Object.keys(pageModules).length)
@@ -53,7 +55,7 @@ export const generateRoutes = (): RouteConfig[] => {
     const routePath = path.replace('../pages/', '').replace('/index.tsx', '')
     const finalPath = routePath === 'home' ? '/' : `/${routePath}`
 
-    console.log(`📍 生成路由: ${path} -> ${finalPath}`)
+    console.log(`📍 生成路由: ${path} -> ${finalPath}, routePath: ${routePath}`)
 
     // 创建懒加载组件
     const LazyComponent = React.lazy(async () => {
@@ -80,6 +82,7 @@ export const generateRoutes = (): RouteConfig[] => {
     })
 
     routes.push({
+      key: routePath,
       path: finalPath,
       component: LazyComponent,
       loader: moduleLoader,
@@ -160,10 +163,29 @@ export const getNavigationItems = (routes: RouteConfig[]) => {
     .filter(route => route.meta?.showInMenu !== false) // 默认显示，除非明确设置为 false
     .map(route => ({
       path: route.path,
-      label: route.meta?.icon ? `${route.meta.icon} ${route.meta.title}` : route.meta?.title || '未命名',
-      description: route.meta?.description || '',
+      label: `pages.${route.key}.title`,
+      icon: route.meta?.icon || '',
+      description: `pages.${route.key}.description`,
       canOpenWindow: route.meta?.canOpenWindow || false
     }))
+}
+
+// 获取支持多语言的导航菜单项
+export const getLocalizedNavigationItems = (routes: RouteConfig[], t: (key: string) => string) => {
+  return routes
+    .filter(route => route.meta?.showInMenu !== false) // 默认显示，除非明确设置为 false
+    .map(route => {
+      // 如果 title 是翻译键，使用翻译函数
+      const title = route.meta?.title || '未命名'
+      const translatedTitle = t(title)
+
+      return {
+        path: route.path,
+        label: route.meta?.icon ? `${route.meta.icon} ${translatedTitle}` : translatedTitle,
+        description: route.meta?.description || '',
+        canOpenWindow: route.meta?.canOpenWindow || false
+      }
+    })
 }
 
 // 权限检查函数
