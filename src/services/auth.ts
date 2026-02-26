@@ -1,29 +1,6 @@
 // 认证相关API服务
 // 统一管理登录、注册等认证请求
-
-export interface LoginRequest {
-  username: string
-  password: string
-}
-
-export interface LoginResponse {
-  success: boolean
-  user?: {
-    id: string
-    name: string
-    email: string
-    avatar?: string
-  }
-  message?: string
-  token?: string
-}
-
-export interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  message?: string
-  error?: string
-}
+import { LoginRequest, LoginResponse, ApiResponse } from '../types/api'
 
 // 模拟API延迟
 const simulateDelay = (ms: number = 2000): Promise<void> => {
@@ -70,8 +47,10 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 
     return {
       success: true,
-      user: userWithoutPassword,
-      token: `mock-token-${user.id}-${Date.now()}`,
+      data: {
+        token: `mock-token-${user.id}-${Date.now()}`,
+        user: userWithoutPassword
+      },
       message: `欢迎回来，${user.name}！`
     }
   } else {
@@ -94,6 +73,7 @@ export const logout = async (): Promise<ApiResponse<null>> => {
 
   return {
     success: true,
+    data: null,
     message: '已成功登出'
   }
 }

@@ -1,13 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type ThemeType = 'light' | 'dark'
-
-interface ThemeState {
-  theme: ThemeType
-  setTheme: (theme: ThemeType) => void
-  toggleTheme: () => void
-}
+// 导入类型定义
+import { ThemeType, ThemeState } from '../types/stores'
 
 // 主题配置
 export const themes = {
@@ -128,9 +123,10 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       theme: 'light',
+      isDark: false,
 
       setTheme: (theme: ThemeType) => {
-        set({ theme })
+        set({ theme, isDark: theme === 'dark' })
         applyTheme(theme)
         broadcastThemeChange(theme)
       },
@@ -138,7 +134,7 @@ export const useThemeStore = create<ThemeState>()(
       toggleTheme: () => {
         const currentTheme = get().theme
         const newTheme = currentTheme === 'light' ? 'dark' : 'light'
-        set({ theme: newTheme })
+        set({ theme: newTheme, isDark: newTheme === 'dark' })
         applyTheme(newTheme)
         broadcastThemeChange(newTheme)
       }

@@ -1,31 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { login as apiLogin, logout as apiLogout, LoginRequest, LoginResponse } from '../services/auth'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatar?: string
-}
-
-interface UserState {
-  currentUser: User | null
-  isLoggedIn: boolean
-  isLoading: boolean
-  error: string | null
-  login: (user: User) => void
-  logout: () => void
-  updateProfile: (updates: Partial<User>) => void
-  // 异步登录方法
-  loginAsync: (credentials: LoginRequest) => Promise<LoginResponse>
-  // 异步登出方法
-  logoutAsync: () => Promise<void>
-  // 设置加载状态
-  setLoading: (loading: boolean) => void
-  // 设置错误信息
-  setError: (error: string | null) => void
-}
+import { User, UserState } from '../types/stores'
 
 export const useUserStore = create<UserState>()(
   persist(
@@ -116,7 +92,17 @@ export const useUserStore = create<UserState>()(
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
-      setError: (error: string | null) => set({ error })
+      setError: (error: string | null) => set({ error }),
+
+      hasRole: (role: string) => {
+        const currentUser = get().currentUser
+        return currentUser?.roles?.includes(role) || false
+      },
+
+      hasPermission: (permission: string) => {
+        const currentUser = get().currentUser
+        return currentUser?.permissions?.includes(permission) || false
+      }
     }),
     {
       name: 'user-storage',

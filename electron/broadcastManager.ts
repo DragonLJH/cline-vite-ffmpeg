@@ -17,6 +17,9 @@ export const BROADCAST_CHANNELS: Record<string, BroadcastConfig> = {
   'theme:changed': {
     includeSender: false
   },
+  'language:changed': {
+    includeSender: false
+  },
   'login:success': {
     includeSender: true,
     logMessage: (data) => `📡 主进程收到登录成功事件: ${JSON.stringify(data)}`

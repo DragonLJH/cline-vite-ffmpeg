@@ -1,14 +1,5 @@
 import { create } from 'zustand'
-
-interface CounterState {
-  count: number
-  increment: () => void
-  decrement: () => void
-  reset: () => void
-  incrementBy: (amount: number) => void
-  decrementBy: (amount: number) => void
-  setCount: (count: number) => void
-}
+import { CounterState } from '../types/stores'
 
 export const useCounterStore = create<CounterState>((set) => ({
   count: 0,

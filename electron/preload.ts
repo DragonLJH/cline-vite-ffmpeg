@@ -49,6 +49,9 @@ interface ElectronAPI {
   // 主题同步
   broadcastThemeChange: (theme: 'light' | 'dark') => void
 
+  // 语言同步
+  broadcastLanguageChange: (language: string) => void
+
   // 登录状态同步
   broadcastLoginSuccess: (userData: any) => Promise<boolean>
   onLoginSuccess: (callback: (userData: any) => void) => void
@@ -95,6 +98,9 @@ const electronAPI: ElectronAPI = {
   // 主题同步
   broadcastThemeChange: (theme: 'light' | 'dark') => ipcRenderer.send('theme:changed', theme),
 
+  // 语言同步
+  broadcastLanguageChange: (language: string) => ipcRenderer.send('language:changed', language),
+
   // 登录状态同步
   broadcastLoginSuccess: (userData: any) => {
     return new Promise((resolve) => {
@@ -118,6 +124,7 @@ const electronAPI: ElectronAPI = {
       'window:maximized',
       'window:unmaximized',
       'theme:changed',
+      'language:changed',
       'login:success',
       'login:success:back'
     ]
@@ -131,6 +138,7 @@ const electronAPI: ElectronAPI = {
       'window:maximized',
       'window:unmaximized',
       'theme:changed',
+      'language:changed',
       'login:success',
       'login:success:back'
     ]
@@ -144,6 +152,7 @@ const electronAPI: ElectronAPI = {
       'window:maximized',
       'window:unmaximized',
       'theme:changed',
+      'language:changed',
       'login:success',
       'login:success:back'
     ]

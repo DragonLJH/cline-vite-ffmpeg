@@ -1,16 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-// 支持的语言类型
-export type Language = 'zh-CN' | 'zh-HK' | 'en-US'
-
-// 语言信息接口
-export interface LanguageInfo {
-  code: Language
-  name: string
-  nativeName: string
-  flag: string
-}
+// 导入类型定义
+import { Language, LanguageInfo } from '../types/stores'
 
 // 语言列表
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [

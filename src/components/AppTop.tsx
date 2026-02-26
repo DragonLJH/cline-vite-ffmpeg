@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { RouteConfig, getNavigationItems } from '../router'
 import { useUserStore } from '../stores/userStore'
+import { UserState } from '../types/stores'
 import { useTranslation } from '../hooks/useTranslation'
 
 interface AppTopProps {
