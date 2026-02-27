@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../../stores/userStore'
-import { LoginRequest } from '../../services/auth'
+import { LoginRequest } from '../../types'
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -37,12 +37,12 @@ const LoginPage: React.FC = () => {
     try {
       const response = await loginAsync(formData)
 
-      if (response.success && response.user) {
+      if (response.success && response.data?.user) {
         console.log('🎉 登录成功，同步状态并关闭窗口')
 
         // 广播登录成功事件给所有窗口
         if (window.electronAPI?.broadcastLoginSuccess) {
-          const res = await window.electronAPI.broadcastLoginSuccess(response.user)
+          const res = await window.electronAPI.broadcastLoginSuccess(response.data.user)
           console.log('📡 已广播登录成功事件', res)
           res &&
             window.electronAPI.closeWindow()

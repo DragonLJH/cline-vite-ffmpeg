@@ -17,6 +17,3 @@ export interface RouteConfig {
   component: () => Promise<PageModule>
   meta: PageMeta
 }
-
-// 支持的语言类型
-export type Language = 'zh-CN' | 'zh-HK' | 'en-US'

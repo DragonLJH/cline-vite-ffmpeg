@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { RouteConfig, getNavigationItems } from '../router'
 import { useUserStore } from '../stores/userStore'
-import { UserState } from '../types/stores'
 import { useTranslation } from '../hooks/useTranslation'
 
 interface AppTopProps {
@@ -160,7 +159,7 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
             {userStore.isLoggedIn ? (
               <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-xl">
                 <span className="text-sm">
-                  {userStore.currentUser?.avatar} {userStore.currentUser?.name}
+                  {userStore.currentUser?.avatar} {userStore.currentUser?.username}
                 </span>
                 <button
                   onClick={handleLogout}

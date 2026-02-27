@@ -1,5 +1,6 @@
 import React from 'react'
-import { useThemeStore, type ThemeType } from '../../stores/themeStore'
+import { useThemeStore } from '../../stores/themeStore'
+import { ThemeType } from '../../types'
 import { useTranslation, useLanguageSelector } from '../../hooks/useTranslation'
 
 const SettingsPage: React.FC = () => {
@@ -61,8 +62,8 @@ const SettingsPage: React.FC = () => {
                 <label
                   key={option.value}
                   className={`flex relative items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${theme === option.value
-                      ? 'border-[var(--border-focus)] bg-[var(--bg-hover)]'
-                      : 'border-[var(--border-primary)] bg-[var(--bg-card)] hover:border-[var(--border-secondary)] hover:bg-[var(--bg-hover)]'
+                    ? 'border-[var(--border-focus)] bg-[var(--bg-hover)]'
+                    : 'border-[var(--border-primary)] bg-[var(--bg-card)] hover:border-[var(--border-secondary)] hover:bg-[var(--bg-hover)]'
                     }`}
                 >
                   <input
@@ -134,8 +135,8 @@ const SettingsPage: React.FC = () => {
                 <label
                   key={option.code}
                   className={`flex relative items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${option.isCurrent
-                      ? 'border-[var(--border-focus)] bg-[var(--bg-hover)]'
-                      : 'border-[var(--border-primary)] bg-[var(--bg-card)] hover:border-[var(--border-secondary)] hover:bg-[var(--bg-hover)]'
+                    ? 'border-[var(--border-focus)] bg-[var(--bg-hover)]'
+                    : 'border-[var(--border-primary)] bg-[var(--bg-card)] hover:border-[var(--border-secondary)] hover:bg-[var(--bg-hover)]'
                     }`}
                 >
                   <input

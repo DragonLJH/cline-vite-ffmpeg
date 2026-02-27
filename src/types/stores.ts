@@ -34,7 +34,7 @@ export interface ThemeState {
 // 用户接口
 export interface User {
   id: string
-  name: string
+  username: string
   email: string
   avatar?: string
   roles?: string[]

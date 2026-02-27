@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { useI18nStore, Language, SUPPORTED_LANGUAGES } from '../stores/i18nStore'
+import { useI18nStore, SUPPORTED_LANGUAGES } from '../stores/i18nStore'
+import { Language } from '../types'
 import { detectLanguage } from '../utils/i18n'
 
 /**
@@ -49,18 +50,18 @@ export const useTranslation = () => {
   return {
     // 翻译函数
     t,
-    
+
     // 当前语言
     currentLanguage,
-    
+
     // 语言切换
     changeLanguage,
-    
+
     // 语言信息
     getCurrentLanguageInfo,
     isCurrentLanguage,
     getLanguageOptions,
-    
+
     // 状态
     isLoading,
     error
@@ -81,7 +82,7 @@ export const useLanguageSelector = () => {
     const currentIndex = options.findIndex(opt => opt.isCurrent)
     const nextIndex = (currentIndex + 1) % options.length
     const nextLanguage = options[nextIndex].code
-    
+
     return changeLanguage(nextLanguage)
   }, [getLanguageOptions, changeLanguage])
 
@@ -93,13 +94,13 @@ export const useLanguageSelector = () => {
     const currentIndex = options.findIndex(opt => opt.isCurrent)
     const nextIndex = (currentIndex + 1) % options.length
     const nextLanguage = options[nextIndex].code
-    
+
     const toggleTexts: Record<Language, string> = {
       'zh-CN': '🌐 快速切换到繁体中文',
       'zh-HK': '🌐 快速切换到英文',
       'en-US': '🌐 快速切换到简体中文'
     }
-    
+
     return toggleTexts[nextLanguage]
   }, [getLanguageOptions])
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { login as apiLogin, logout as apiLogout, LoginRequest, LoginResponse } from '../services/auth'
-import { User, UserState } from '../types/stores'
+import { login as apiLogin, logout as apiLogout } from '../services/auth'
+import { LoginRequest, LoginResponse, User, UserState } from '../types'
 
 export const useUserStore = create<UserState>()(
   persist(
@@ -39,9 +39,9 @@ export const useUserStore = create<UserState>()(
         try {
           const response = await apiLogin(credentials)
 
-          if (response.success && response.user) {
+          if (response.success && response.data?.user) {
             set({
-              currentUser: response.user,
+              currentUser: response.data.user,
               isLoggedIn: true,
               isLoading: false,
               error: null

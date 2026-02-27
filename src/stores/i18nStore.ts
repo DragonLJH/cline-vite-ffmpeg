@@ -2,8 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 // 导入类型定义
-import { Language, LanguageInfo } from '../types/stores'
-
+import { LanguageInfo, Language } from '../types'
 // 语言列表
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   {
