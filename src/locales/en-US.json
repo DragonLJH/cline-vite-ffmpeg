@@ -221,19 +221,19 @@
           "description": "Eye-protective dark interface design"
         },
         "quickToggle": {
-          "light": "🌙 Quick toggle to dark theme",
-          "dark": "☀️ Quick toggle to light theme"
+          "light": "🌙 Quick switch to dark theme",
+          "dark": "☀️ Quick switch to light theme"
         }
       },
       "languageSettings": {
         "title": "🌐 Language Settings",
         "description": "Choose your preferred interface language",
         "simplifiedChinese": {
-          "label": "Simplified Chinese",
+          "label": "简体中文",
           "description": "Simplified Chinese used in Mainland China"
         },
         "traditionalChinese": {
-          "label": "Traditional Chinese (Hong Kong)",
+          "label": "繁體中文（香港）",
           "description": "Traditional Chinese used in Hong Kong"
         },
         "english": {
@@ -241,9 +241,9 @@
           "description": "American English"
         },
         "quickToggle": {
-          "zh-CN": "🌐 Quick toggle to Traditional Chinese",
-          "zh-HK": "🌐 Quick toggle to English",
-          "en-US": "🌐 Quick toggle to Simplified Chinese"
+          "zh-CN": "🌐 Quick switch to Traditional Chinese",
+          "zh-HK": "🌐 Quick switch to English",
+          "en-US": "🌐 Quick switch to Simplified Chinese"
         },
         "autoDetect": "🔍 Auto-detect system language",
         "resetToChinese": "🇨🇳 Reset to Simplified Chinese",
@@ -252,10 +252,51 @@
       },
       "moreSettings": {
         "title": "🔄 More Settings",
-        "description": "More personalized options coming soon",
+        "description": "More personalization options coming soon",
         "comingSoon": "More settings options will be added in future versions, including language, notifications, data management, and more."
       },
-      "footer": "Settings will be automatically saved to local storage and remain effective after restarting the application."
+      "footer": "Settings are automatically saved to local storage and will persist after restarting the application."
+    },
+    "watermark": {
+      "title": "🎬 Video Watermark Tool",
+      "description": "Add custom watermarks to your videos with multiple position and style options",
+      "upload": {
+        "title": "📁 File Upload",
+        "dropTitle": "Drag video files here",
+        "dropDescription": "Supports common video formats like MP4, AVI, MOV",
+        "selectButton": "Select File",
+        "selectedFile": "Selected File"
+      },
+      "config": {
+        "title": "⚙️ Watermark Configuration",
+        "watermarkText": "Watermark Text",
+        "watermarkTextPlaceholder": "Enter watermark text content",
+        "position": "Watermark Position",
+        "opacity": "Watermark Opacity",
+        "size": "Watermark Size",
+        "processButton": "Start Processing",
+        "resetButton": "Reset Configuration",
+        "processing": "Processing...",
+        "progress": "Processing Progress",
+        "positions": {
+          "topLeft": "Top Left",
+          "topRight": "Top Right",
+          "bottomLeft": "Bottom Left",
+          "bottomRight": "Bottom Right",
+          "center": "Center"
+        },
+        "opacityLow": "Low Opacity",
+        "opacityHigh": "High Opacity",
+        "sizeSmall": "Small Size",
+        "sizeLarge": "Large Size"
+      },
+      "result": {
+        "title": "✅ Processing Result",
+        "original": "Original Video",
+        "processed": "With Watermark",
+        "downloadButton": "Download Processed Video",
+        "reprocessButton": "Reprocess"
+      }
     }
   },
   "components": {

@@ -229,8 +229,8 @@
         "title": "🌐 語言設定",
         "description": "選擇您偏好的介面語言",
         "simplifiedChinese": {
-          "label": "簡體中文",
-          "description": "中國大陸地區使用的簡體中文"
+          "label": "简体中文",
+          "description": "中国大陆地区使用的简体中文"
         },
         "traditionalChinese": {
           "label": "繁體中文（香港）",
@@ -255,7 +255,48 @@
         "description": "敬請期待更多個人化選項",
         "comingSoon": "未來版本將添加更多設定選項，包括語言、通知、數據管理等功能。"
       },
-      "footer": "設定會自動儲存到本機儲存，重啟應用後仍然生效。"
+      "footer": "設定會自動保存到本地存儲，重啟應用後仍然生效。"
+    },
+    "watermark": {
+      "title": "🎬 影片浮水印添加器",
+      "description": "為您的影片添加自訂浮水印，支援多種位置和樣式設定",
+      "upload": {
+        "title": "📁 檔案上傳",
+        "dropTitle": "拖曳影片檔案到此處",
+        "dropDescription": "支援 MP4、AVI、MOV 等常見影片格式",
+        "selectButton": "選擇檔案",
+        "selectedFile": "已選擇檔案"
+      },
+      "config": {
+        "title": "⚙️ 浮水印設定",
+        "watermarkText": "浮水印文字",
+        "watermarkTextPlaceholder": "請輸入浮水印文字內容",
+        "position": "浮水印位置",
+        "opacity": "浮水印透明度",
+        "size": "浮水印大小",
+        "processButton": "開始處理",
+        "resetButton": "重置設定",
+        "processing": "處理中...",
+        "progress": "處理進度",
+        "positions": {
+          "topLeft": "左上角",
+          "topRight": "右上角",
+          "bottomLeft": "左下角",
+          "bottomRight": "右下角",
+          "center": "居中"
+        },
+        "opacityLow": "低透明度",
+        "opacityHigh": "高透明度",
+        "sizeSmall": "小尺寸",
+        "sizeLarge": "大尺寸"
+      },
+      "result": {
+        "title": "✅ 處理結果",
+        "original": "原始影片",
+        "processed": "添加浮水印後",
+        "downloadButton": "下載處理後的影片",
+        "reprocessButton": "重新處理"
+      }
     }
   },
   "components": {

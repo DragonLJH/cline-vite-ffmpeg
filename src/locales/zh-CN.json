@@ -256,6 +256,47 @@
         "comingSoon": "未来版本将添加更多设置选项，包括语言、通知、数据管理等功能。"
       },
       "footer": "设置会自动保存到本地存储，重启应用后仍然生效。"
+    },
+    "watermark": {
+      "title": "🎬 视频水印添加器",
+      "description": "为您的视频添加自定义水印，支持多种位置和样式配置",
+      "upload": {
+        "title": "📁 文件上传",
+        "dropTitle": "拖拽视频文件到此处",
+        "dropDescription": "支持 MP4、AVI、MOV 等常见视频格式",
+        "selectButton": "选择文件",
+        "selectedFile": "已选择文件"
+      },
+      "config": {
+        "title": "⚙️ 水印配置",
+        "watermarkText": "水印文字",
+        "watermarkTextPlaceholder": "请输入水印文字内容",
+        "position": "水印位置",
+        "opacity": "水印透明度",
+        "size": "水印大小",
+        "processButton": "开始处理",
+        "resetButton": "重置配置",
+        "processing": "处理中...",
+        "progress": "处理进度",
+        "positions": {
+          "topLeft": "左上角",
+          "topRight": "右上角",
+          "bottomLeft": "左下角",
+          "bottomRight": "右下角",
+          "center": "居中"
+        },
+        "opacityLow": "低透明度",
+        "opacityHigh": "高透明度",
+        "sizeSmall": "小尺寸",
+        "sizeLarge": "大尺寸"
+      },
+      "result": {
+        "title": "✅ 处理结果",
+        "original": "原始视频",
+        "processed": "添加水印后",
+        "downloadButton": "下载处理后的视频",
+        "reprocessButton": "重新处理"
+      }
     }
   },
   "components": {

@@ -13,6 +13,7 @@ dist-ssr
 *.local
 release
 build/.out
+public/ffmpeg
 
 # Editor directories and files
 .vscode/*
