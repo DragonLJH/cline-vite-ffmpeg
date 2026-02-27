@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { CounterState } from '../types'
+import { CounterState } from '@/types'
 
 export const useCounterStore = create<CounterState>((set) => ({
   count: 0,

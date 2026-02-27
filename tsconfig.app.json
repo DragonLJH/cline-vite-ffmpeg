@@ -20,7 +20,13 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Vite specific */
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+
+    /* 路径别名配置 */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src"]
 }

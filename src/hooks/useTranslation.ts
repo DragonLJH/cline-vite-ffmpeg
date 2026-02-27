@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { useI18nStore, SUPPORTED_LANGUAGES } from '../stores/i18nStore'
-import { Language } from '../types'
-import { detectLanguage } from '../utils/i18n'
+import { useI18nStore, SUPPORTED_LANGUAGES } from '@/stores/i18nStore'
+import { Language } from '@/types'
+import { detectLanguage } from '@/utils/i18n'
 
 /**
  * 翻译Hook

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { login as apiLogin, logout as apiLogout } from '../services/auth'
-import { LoginRequest, LoginResponse, User, UserState } from '../types'
+import { login as apiLogin, logout as apiLogout } from '@/services/auth'
+import { LoginRequest, LoginResponse, User, UserState } from '@/types'
 
 export const useUserStore = create<UserState>()(
   persist(

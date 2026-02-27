@@ -1,4 +1,5 @@
-import { Language, SUPPORTED_LANGUAGES } from '../stores/i18nStore'
+import { SUPPORTED_LANGUAGES, useI18nStore } from '@/stores/i18nStore'
+import { Language } from '@/types'
 
 /**
  * 格式化日期
@@ -18,7 +19,7 @@ export const formatDate = (date: Date | number, language: Language = 'zh-CN', op
   }
 
   const formatOptions = { ...defaultOptions, ...options }
-  
+
   try {
     return new Intl.DateTimeFormat(language, formatOptions).format(date)
   } catch (error) {
@@ -40,7 +41,7 @@ export const formatNumber = (number: number, language: Language = 'zh-CN', optio
   }
 
   const formatOptions = { ...defaultOptions, ...options }
-  
+
   try {
     return new Intl.NumberFormat(language, formatOptions).format(number)
   } catch (error) {
@@ -65,7 +66,7 @@ export const formatCurrency = (amount: number, currency: string = 'CNY', languag
   }
 
   const formatOptions = { ...defaultOptions, ...options }
-  
+
   try {
     return new Intl.NumberFormat(language, formatOptions).format(amount)
   } catch (error) {
@@ -90,10 +91,9 @@ export const getLanguageDisplayName = (code: Language): string => {
  */
 export const getCurrentLanguageDisplayName = (): string => {
   if (typeof window === 'undefined') return 'zh-CN'
-  
+
   try {
-    // 直接访问全局store实例
-    const { useI18nStore } = require('../stores/i18nStore')
+    // 直接访问全局store实例 
     const currentLanguage = useI18nStore.getState().currentLanguage
     return getLanguageDisplayName(currentLanguage)
   } catch (error) {
@@ -117,9 +117,9 @@ export const isLanguageSupported = (code: string): code is Language => {
  */
 export const getBrowserLanguage = (): Language => {
   if (typeof window === 'undefined') return 'zh-CN'
-  
+
   const browserLang = navigator.language || (navigator as any).userLanguage
-  
+
   if (browserLang.startsWith('zh-CN') || browserLang.startsWith('zh-SG')) {
     return 'zh-CN'
   } else if (browserLang.startsWith('zh-TW') || browserLang.startsWith('zh-HK') || browserLang.startsWith('zh-MO')) {
@@ -127,7 +127,7 @@ export const getBrowserLanguage = (): Language => {
   } else if (browserLang.startsWith('en')) {
     return 'en-US'
   }
-  
+
   return 'zh-CN'
 }
 
@@ -140,7 +140,7 @@ export const getBrowserLanguage = (): Language => {
 export const resolveTranslationKey = (key: string, translations: Record<string, any>): any => {
   const keys = key.split('.')
   let current = translations
-  
+
   for (const k of keys) {
     if (current && typeof current === 'object' && k in current) {
       current = current[k]
@@ -148,7 +148,7 @@ export const resolveTranslationKey = (key: string, translations: Record<string, 
       return null
     }
   }
-  
+
   return current
 }
 
@@ -161,27 +161,27 @@ export const resolveTranslationKey = (key: string, translations: Record<string, 
  * @returns 翻译结果
  */
 export const safeTranslate = (
-  key: string, 
-  translations: Record<string, any>, 
-  params?: Record<string, any>, 
+  key: string,
+  translations: Record<string, any>,
+  params?: Record<string, any>,
   fallback?: string
 ): string => {
   const value = resolveTranslationKey(key, translations)
-  
+
   if (typeof value !== 'string') {
     console.warn(`⚠️ 翻译键不存在或不是字符串: ${key}`)
     return fallback || key
   }
-  
+
   let result = value
-  
+
   // 处理参数替换
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       result = result.replace(new RegExp(`{${key}}`, 'g'), String(value))
     })
   }
-  
+
   return result
 }
 
@@ -192,17 +192,17 @@ export const safeTranslate = (
  */
 export const onLanguageChange = (callback: (language: Language) => void): (() => void) => {
   if (typeof window === 'undefined') {
-    return () => {}
+    return () => { }
   }
-  
+
   const handleLanguageChange = (event: any, newLanguage: Language) => {
     callback(newLanguage)
   }
-  
+
   if (window.electronAPI?.on) {
     window.electronAPI.on('language:changed', handleLanguageChange)
   }
-  
+
   return () => {
     if (window.electronAPI?.off) {
       window.electronAPI.off('language:changed', handleLanguageChange)
@@ -216,7 +216,7 @@ export const onLanguageChange = (callback: (language: Language) => void): (() =>
  */
 export const broadcastLanguageChange = (language: Language): void => {
   if (typeof window === 'undefined') return
-  
+
   if (window.electronAPI?.broadcastLanguageChange) {
     try {
       window.electronAPI.broadcastLanguageChange(language)
@@ -267,7 +267,7 @@ export class LanguageUtils {
       const relativeTime = new Intl.RelativeTimeFormat(language, { numeric: 'auto' })
       const now = Date.now()
       const diffInSeconds = Math.floor((date.valueOf() - now) / 1000)
-      
+
       if (Math.abs(diffInSeconds) < 60) {
         return relativeTime.format(diffInSeconds, 'second')
       } else if (Math.abs(diffInSeconds) < 3600) {

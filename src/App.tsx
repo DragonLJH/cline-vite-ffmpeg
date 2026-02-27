@@ -1,8 +1,9 @@
 import React, { Suspense, useState, useEffect, useMemo } from 'react'
-import { HashRouter as Router, Routes, Route, Link, useLocation, useParams } from 'react-router-dom'
-import AppTop from './components/AppTop'
-import { generateRoutes, getRoutesWithMeta, RouteConfig, getNavigationItems, getLocalizedNavigationItems } from './router'
-import { useTranslation } from './hooks/useTranslation'
+import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import AppTop from '@/components/AppTop'
+import { getRoutesWithMeta, RouteConfig, getNavigationItems } from '@/router'
+import { useTranslation } from '@/hooks/useTranslation'
+// import { useUserStore } from '@/stores/userStore'
 // 导入主题系统，确保在应用启动时初始化
 import './stores/themeStore'
 import './App.scss'

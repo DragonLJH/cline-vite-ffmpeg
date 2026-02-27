@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 // 导入类型定义
-import { ThemeState, ThemeType } from '../types'
+import { ThemeState, ThemeType } from '@/types'
 
 // 主题配置
 export const themes = {

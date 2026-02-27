@@ -1,6 +1,6 @@
 // 认证相关API服务
 // 统一管理登录、注册等认证请求
-import { LoginRequest, LoginResponse, ApiResponse } from '../types'
+import { LoginRequest, LoginResponse, ApiResponse } from '@/types'
 
 // 模拟API延迟
 const simulateDelay = (ms: number = 2000): Promise<void> => {
