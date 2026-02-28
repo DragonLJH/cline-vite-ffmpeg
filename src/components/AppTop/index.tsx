@@ -125,13 +125,17 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
     // 根据平台决定是否显示窗口控制按钮
     const showWindowControls = platform === 'win32'
 
+    // 为 macOS 添加左侧边距，避免与原生窗口控制按钮重叠
+    const macosStyle = platform === 'darwin' ? { paddingLeft: '68px' } : {}
+
     return (
         <div
             className="app-top h-12 text-white flex items-center justify-between px-4 relative select-none cursor-default bg-[var(--gradient-primary)]"
+            style={macosStyle}
             onDoubleClick={handleDoubleClick}
         >
             {/* 左侧：品牌和导航 */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 text-[var(--text-primary)]">
                 {/* 品牌信息 */}
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-white/20 rounded-md flex items-center justify-center text-base">
@@ -142,14 +146,14 @@ const AppTop: React.FC<AppTopProps> = ({ routes = [] }) => {
                             Vite + React + Electron
                         </div>
                         <div className="text-xs opacity-80 leading-none">
-                            {t('pages.home.description')}
+                            {t('pages_home_description')}
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* 右侧：用户信息、状态指示器和窗口控制 */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-[var(--text-primary)]">
                 {/* 用户信息（登录后显示，仅在主窗口中） */}
                 {!isInNewWindow && (
                     <>

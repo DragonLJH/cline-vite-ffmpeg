@@ -163,9 +163,9 @@ export const getNavigationItems = (routes: RouteConfig[]) => {
     .filter(route => route.meta?.showInMenu !== false) // 默认显示，除非明确设置为 false
     .map(route => ({
       path: route.path,
-      label: `pages.${route.key}.title`,
+      label: `pages_${route.key}_title`,
       icon: route.meta?.icon || '',
-      description: `pages.${route.key}.description`,
+      description: `pages_${route.key}_description`,
       canOpenWindow: route.meta?.canOpenWindow || false
     }))
 }

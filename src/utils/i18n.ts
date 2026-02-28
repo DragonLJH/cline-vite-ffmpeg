@@ -138,6 +138,12 @@ export const getBrowserLanguage = (): Language => {
  * @returns 翻译值
  */
 export const resolveTranslationKey = (key: string, translations: Record<string, any>): any => {
+  // 直接使用下划线分割的键查找翻译
+  if (key in translations) {
+    return translations[key]
+  }
+
+  // 如果找不到，尝试使用点号分割的旧格式作为回退
   const keys = key.split('.')
   let current = translations
 

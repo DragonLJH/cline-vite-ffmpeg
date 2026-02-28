@@ -2,6 +2,121 @@ import React, { useState, useRef, useCallback, useContext, createContext } from 
 import { UploadProps, UploadFile, UploadState, UploadContextValue } from './types'
 import './Upload.scss'
 
+// 文件路径转换为File对象的辅助函数
+const convertFilePathsToFiles = async (filePaths: string[]): Promise<File[]> => {
+  if (!window.electronAPI) {
+    throw new Error('Electron API not available')
+  }
+
+  const files: File[] = []
+  
+  for (const filePath of filePaths) {
+    try {
+      // 通过主进程读取文件
+      const { buffer, fileName } = await window.electronAPI.readFile(filePath)
+      
+      // 将base64转换为ArrayBuffer
+      const binaryString = atob(buffer)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      // 创建File对象
+      const file = new File([bytes], fileName, {
+        type: getFileTypeFromPath(filePath)
+      })
+      
+      files.push(file)
+    } catch (error) {
+      console.error(`Failed to read file ${filePath}:`, error)
+    }
+  }
+  
+  return files
+}
+
+// 根据文件路径推断文件类型
+const getFileTypeFromPath = (filePath: string): string => {
+  const extension = filePath.split('.').pop()?.toLowerCase()
+  
+  if (!extension) return 'application/octet-stream'
+  
+  const typeMap: Record<string, string> = {
+    // 图片类型
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'bmp': 'image/bmp',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    
+    // 视频类型
+    'mp4': 'video/mp4',
+    'avi': 'video/x-msvideo',
+    'mov': 'video/quicktime',
+    'wmv': 'video/x-ms-wmv',
+    'flv': 'video/x-flv',
+    'webm': 'video/webm',
+    'mkv': 'video/x-matroska',
+    
+    // 音频类型
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'flac': 'audio/flac',
+    'aac': 'audio/aac',
+    
+    // 文档类型
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'txt': 'text/plain',
+    'json': 'application/json',
+    'xml': 'application/xml'
+  }
+  
+  return typeMap[extension] || 'application/octet-stream'
+}
+
+// 从accept字符串中提取文件扩展名
+const getExtensionsFromAccept = (accept: string): string[] => {
+  if (!accept) return []
+  
+  // 处理常见的accept格式
+  const extensions: string[] = []
+  
+  // 分割accept字符串（支持逗号分隔）
+  const acceptTypes = accept.split(',').map(type => type.trim())
+  
+  for (const type of acceptTypes) {
+    if (type.startsWith('.')) {
+      // 直接是扩展名，如 .jpg, .png
+      const ext = type.substring(1).toLowerCase()
+      if (ext) extensions.push(ext)
+    } else if (type.includes('/')) {
+      // MIME类型，如 image/*, video/mp4
+      const [category, subtype] = type.split('/')
+      
+      if (category === 'image') {
+        extensions.push('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg')
+      } else if (category === 'video') {
+        extensions.push('mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv')
+      } else if (category === 'audio') {
+        extensions.push('mp3', 'wav', 'ogg', 'flac', 'aac')
+      } else if (type === 'application/pdf') {
+        extensions.push('pdf')
+      } else if (type === 'text/plain') {
+        extensions.push('txt')
+      }
+    }
+  }
+  
+  // 去重并返回
+  return [...new Set(extensions)]
+}
+
 // 创建 Context
 const UploadContext = createContext<UploadContextValue | null>(null)
 
@@ -77,8 +192,6 @@ const Upload: React.FC<UploadProps> = ({
     isDragging: false,
     isUploading: false
   })
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 添加文件
   const addFiles = useCallback(async (newFiles: File[]) => {
@@ -263,21 +376,29 @@ const Upload: React.FC<UploadProps> = ({
     }
   }, [disabled, addFiles])
 
-  // 文件选择事件处理
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length > 0) {
-      addFiles(files)
-    }
-    // 清空 input，允许重复选择同一文件
-    e.target.value = ''
-  }, [addFiles])
+  const triggerFileInput = useCallback(async () => {
+    if (disabled) return
 
-  const triggerFileInput = useCallback(() => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click()
+    try {
+      // 使用主进程的原生文件对话框
+      const filePaths = await window.electronAPI.openFileDialog({
+        title: '选择文件',
+        filters: accept ? [
+          { name: '支持的文件', extensions: getExtensionsFromAccept(accept) }
+        ] : undefined,
+        properties: multiple ? ['openFile', 'multiSelections'] : ['openFile']
+      })
+
+      if (filePaths && filePaths.length > 0) {
+        // 将文件路径转换为File对象
+        const files = await convertFilePathsToFiles(filePaths)
+        addFiles(files)
+      }
+    } catch (error) {
+      console.error('Failed to open file dialog:', error)
+      onError?.('打开文件选择对话框失败')
     }
-  }, [disabled])
+  }, [disabled, accept, multiple, addFiles, onError])
 
   // 渲染文件项
   const renderFileItem = (file: UploadFile) => {
@@ -357,15 +478,6 @@ const Upload: React.FC<UploadProps> = ({
           onDrop={handleDrop}
           onClick={triggerFileInput}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={accept}
-            multiple={multiple}
-            className="upload-input"
-            onChange={handleFileInputChange}
-          />
-          
           <div className="upload-content">
             {children || (
               <>

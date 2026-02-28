@@ -61,7 +61,7 @@ const Sidebar: React.FC<{ routes: RouteConfig[] }> = ({ routes }) => {
       {/* 侧边栏头部 */}
       <div className="px-4 py-4 mb-4 border-b border-[var(--border-primary)]">
         <h2 className="m-0 text-xl font-semibold text-center text-[var(--text-primary)]">
-          {t('components.sidebar.title')}
+          {t('components_sidebar_title')}
         </h2>
       </div>
 
@@ -82,7 +82,7 @@ const Sidebar: React.FC<{ routes: RouteConfig[] }> = ({ routes }) => {
               <button
                 onClick={() => handleOpenInWindow(item.path, item.label.replace(/^[^\s]+\s/, ''))}
                 className="p-2 rounded-md cursor-pointer text-xs opacity-70 transition-all duration-200 w-8 h-8 flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-primary)] text-[var(--text-secondary)] hover:opacity-100 hover:bg-[var(--gradient-primary)] hover:text-[var(--text-inverse)]"
-                title={t('navigation.openInWindow')}
+                title={t('navigation_openInWindow')}
               >
                 🪟
               </button>

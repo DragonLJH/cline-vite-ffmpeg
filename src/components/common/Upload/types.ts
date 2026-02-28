@@ -7,6 +7,8 @@ export interface UploadFile {
   size: number
   type: string
   preview?: string
+  previewType?: 'image' | 'svg' | 'video-thumbnail'
+  hasMetadata?: boolean
   status: 'pending' | 'uploading' | 'success' | 'error'
   progress: number
   error?: string

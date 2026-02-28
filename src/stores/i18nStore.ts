@@ -166,8 +166,8 @@ export const useI18nStore = create<I18nState>()(
         try {
           console.log(`🌍 加载翻译文件: ${language}`)
 
-          // 动态导入翻译文件
-          const translationModule = await import(`../locales/${language}.json`)
+          // 动态导入翻译文件 (从 .json 改为 .ts)
+          const translationModule = await import(`../locales/${language}.ts`)
 
           set({
             translations: translationModule.default || {},

@@ -5,8 +5,8 @@ import Upload from '../../components/common/Upload'
 
 // 页面元数据
 export const pageMeta = {
-  title: 'pages.watermark.title',
-  description: 'pages.watermark.description',
+  title: 'pages_watermark_title',
+  description: 'pages_watermark_description',
   path: '/watermark',
   icon: '🎬',
   permissions: [],
@@ -70,10 +70,10 @@ const WatermarkPage: React.FC = () => {
         {/* 头部区域 */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 text-[var(--text-primary)] bg-[var(--gradient-primary)] bg-clip-text text-transparent">
-            🎬 {t('pages.watermark.title')}
+            🎬 {t('pages_watermark_title')}
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
-            {t('pages.watermark.description')}
+            {t('pages_watermark_description')}
           </p>
         </div>
 
@@ -82,7 +82,7 @@ const WatermarkPage: React.FC = () => {
           {/* 左侧：文件上传区域 */}
           <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
             <h2 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
-              📁 {t('pages.watermark.upload.title')}
+              📁 {t('pages_watermark_upload_title')}
             </h2>
 
             {/* 使用公共上传组件 */}
@@ -90,8 +90,8 @@ const WatermarkPage: React.FC = () => {
               accept="video/*"
               maxSize={100}
               multiple={false}
-              uploadText={t('pages.watermark.upload.dropTitle')}
-              buttonText={t('pages.watermark.upload.selectButton')}
+              uploadText={t('pages_watermark_upload_dropTitle')}
+              buttonText={t('pages_watermark_upload_selectButton')}
               showFileList={false}
               onFileSelect={(files) => {
                 if (files.length > 0) {
@@ -106,7 +106,7 @@ const WatermarkPage: React.FC = () => {
             {selectedFile && (
               <div className="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
                 <h4 className="font-semibold text-[var(--text-primary)] mb-2">
-                  📄 {t('pages.watermark.upload.selectedFile')}
+                  📄 {t('pages_watermark_upload_selectedFile')}
                 </h4>
                 <p className="text-[var(--text-secondary)]">{selectedFile.name}</p>
               </div>
@@ -116,38 +116,38 @@ const WatermarkPage: React.FC = () => {
           {/* 右侧：处理配置区域 */}
           <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
             <h2 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
-              ⚙️ {t('pages.watermark.config.title')}
+              ⚙️ {t('pages_watermark_config_title')}
             </h2>
 
             {/* 水印配置表单 */}
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  💬 {t('pages.watermark.config.watermarkText')}
+                  💬 {t('pages_watermark_config_watermarkText')}
                 </label>
                 <input
                   type="text"
-                  placeholder={t('pages.watermark.config.watermarkTextPlaceholder')}
+                  placeholder={t('pages_watermark_config_watermarkTextPlaceholder')}
                   className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-[var(--text-primary)]"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  🎨 {t('pages.watermark.config.position')}
+                  🎨 {t('pages_watermark_config_position')}
                 </label>
                 <select className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-[var(--text-primary)]">
-                  <option>{t('pages.watermark.config.positions.topLeft')}</option>
-                  <option>{t('pages.watermark.config.positions.topRight')}</option>
-                  <option>{t('pages.watermark.config.positions.bottomLeft')}</option>
-                  <option>{t('pages.watermark.config.positions.bottomRight')}</option>
-                  <option>{t('pages.watermark.config.positions.center')}</option>
+                  <option>{t('pages_watermark_config_positions_topLeft')}</option>
+                  <option>{t('pages_watermark_config_positions_topRight')}</option>
+                  <option>{t('pages_watermark_config_positions_bottomLeft')}</option>
+                  <option>{t('pages_watermark_config_positions_bottomRight')}</option>
+                  <option>{t('pages_watermark_config_positions_center')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  🔢 {t('pages.watermark.config.opacity')}
+                  🔢 {t('pages_watermark_config_opacity')}
                 </label>
                 <input
                   type="range"
@@ -157,14 +157,14 @@ const WatermarkPage: React.FC = () => {
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-[var(--text-secondary)]">
-                  <span>{t('pages.watermark.config.opacityLow')}</span>
-                  <span>{t('pages.watermark.config.opacityHigh')}</span>
+                  <span>{t('pages_watermark_config_opacityLow')}</span>
+                  <span>{t('pages_watermark_config_opacityHigh')}</span>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  📏 {t('pages.watermark.config.size')}
+                  📏 {t('pages_watermark_config_size')}
                 </label>
                 <input
                   type="range"
@@ -174,8 +174,8 @@ const WatermarkPage: React.FC = () => {
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-[var(--text-secondary)]">
-                  <span>{t('pages.watermark.config.sizeSmall')}</span>
-                  <span>{t('pages.watermark.config.sizeLarge')}</span>
+                  <span>{t('pages_watermark_config_sizeSmall')}</span>
+                  <span>{t('pages_watermark_config_sizeLarge')}</span>
                 </div>
               </div>
 
@@ -185,11 +185,11 @@ const WatermarkPage: React.FC = () => {
                   {isProcessing ? (
                     <span className="flex items-center justify-center">
                       <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--text-inverse)] mr-2"></span>
-                      {t('pages.watermark.config.processing')}
+                      {t('pages_watermark_config_processing')}
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
-                      🎬 {t('pages.watermark.config.processButton')}
+                      🎬 {t('pages_watermark_config_processButton')}
                     </span>
                   )}
                 </button>
@@ -197,7 +197,7 @@ const WatermarkPage: React.FC = () => {
                   onClick={resetState}
                   className="px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-[var(--bg-card)]"
                 >
-                  🗑️ {t('pages.watermark.config.resetButton')}
+                  🗑️ {t('pages_watermark_config_resetButton')}
                 </button>
               </div>
 
@@ -205,7 +205,7 @@ const WatermarkPage: React.FC = () => {
               {isProcessing && (
                 <div className="mt-4">
                   <div className="flex justify-between text-sm text-[var(--text-secondary)] mb-2">
-                    <span>{t('pages.watermark.config.progress')}</span>
+                    <span>{t('pages_watermark_config_progress')}</span>
                     <span>{progress}%</span>
                   </div>
                   <div className="w-full bg-[var(--bg-secondary)] rounded-full h-2">
@@ -224,12 +224,12 @@ const WatermarkPage: React.FC = () => {
         {processedFile && (
           <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
             <h2 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
-              ✅ {t('pages.watermark.result.title')}
+              ✅ {t('pages_watermark_result_title')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h3 className="font-semibold text-[var(--text-primary)] mb-4">
-                  📼 {t('pages.watermark.result.original')}
+                  📼 {t('pages_watermark_result_original')}
                 </h3>
                 <video
                   src={URL.createObjectURL(selectedFile!)}
@@ -239,7 +239,7 @@ const WatermarkPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-[var(--text-primary)] mb-4">
-                  🎬 {t('pages.watermark.result.processed')}
+                  🎬 {t('pages_watermark_result_processed')}
                 </h3>
                 <video
                   src={URL.createObjectURL(processedFile)}
@@ -250,10 +250,10 @@ const WatermarkPage: React.FC = () => {
             </div>
             <div className="mt-6 flex gap-4">
               <button className="inline-flex items-center px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] rounded-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-[var(--btn-primary-hover)]">
-                📥 {t('pages.watermark.result.downloadButton')}
+                📥 {t('pages_watermark_result_downloadButton')}
               </button>
               <button className="inline-flex items-center px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-[var(--bg-card)]">
-                🔄 {t('pages.watermark.result.reprocessButton')}
+                🔄 {t('pages_watermark_result_reprocessButton')}
               </button>
             </div>
           </div>

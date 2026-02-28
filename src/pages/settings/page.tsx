@@ -121,10 +121,10 @@ const SettingsPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-3xl font-semibold mb-2 text-[var(--text-primary)]">
-                  {t('pages.settings.languageSettings.title')}
+                  {t('pages_settings_languageSettings_title')}
                 </h2>
                 <p className="text-[var(--text-secondary)]">
-                  {t('pages.settings.languageSettings.description')}
+                  {t('pages_settings_languageSettings_description')}
                 </p>
               </div>
             </div>
@@ -194,7 +194,7 @@ const SettingsPage: React.FC = () => {
                   className="inline-flex items-center px-6 py-3 bg-[var(--btn-secondary)] text-white border-none rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 hover:bg-[var(--btn-secondary-hover)] hover:-translate-y-1 hover:shadow-[var(--shadow-md)]"
                 >
                   <span className="mr-2">🔍</span>
-                  {t('pages.settings.languageSettings.autoDetect')}
+                  {t('pages_settings_languageSettings_autoDetect')}
                 </button>
 
                 <button
@@ -202,7 +202,7 @@ const SettingsPage: React.FC = () => {
                   className="inline-flex items-center px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 hover:bg-[var(--bg-hover)] hover:-translate-y-1"
                 >
                   <span className="mr-2">🇨🇳</span>
-                  {t('pages.settings.languageSettings.resetToChinese')}
+                  {t('pages_settings_languageSettings_resetToChinese')}
                 </button>
 
                 <button
@@ -210,14 +210,14 @@ const SettingsPage: React.FC = () => {
                   className="inline-flex items-center px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 hover:bg-[var(--bg-hover)] hover:-translate-y-1"
                 >
                   <span className="mr-2">🇺🇸</span>
-                  {t('pages.settings.languageSettings.resetToEnglish')}
+                  {t('pages_settings_languageSettings_resetToEnglish')}
                 </button>
               </div>
 
               {/* 当前语言信息 */}
               <div className="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
                 <p className="text-sm text-[var(--text-secondary)]">
-                  {t('pages.settings.languageSettings.currentLanguage')}:
+                  {t('pages_settings_languageSettings_currentLanguage')}:
                   <span className="ml-2 font-medium text-[var(--text-primary)]">
                     {getLanguageOptions().find(opt => opt.isCurrent)?.nativeName || currentLanguage}
                   </span>

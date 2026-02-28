@@ -38,6 +38,16 @@ interface ElectronAPI {
     readText: () => string
     writeText: (text: string) => void
   }
+  
+  // 文件操作
+  readFile: (filePath: string) => Promise<{ buffer: string; fileName: string }>
+
+  // FFmpeg 处理
+  ffmpeg: {
+    checkAudioMetadata: (filePath: string) => Promise<{ hasCover: boolean }>
+    extractAudioCover: (filePath: string) => Promise<string | null>
+    extractVideoThumbnail: (filePath: string) => Promise<string | null>
+  }
 
   // 应用信息
   appInfo: {
@@ -68,4 +78,4 @@ declare global {
   }
 }
 
-export {}
+export { }

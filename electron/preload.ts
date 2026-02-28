@@ -56,6 +56,17 @@ interface ElectronAPI {
   broadcastLoginSuccess: (userData: any) => Promise<boolean>
   onLoginSuccess: (callback: (userData: any) => void) => void
 
+  // 文件操作
+  readFile: (filePath: string) => Promise<{ buffer: string; fileName: string }>
+
+  // FFmpeg 处理
+  ffmpeg: {
+    checkAudioMetadata: (filePath: string) => Promise<{ hasCover: boolean }>
+    extractAudioCover: (filePath: string) => Promise<string | null>
+    extractVideoThumbnail: (filePath: string) => Promise<string | null>
+  }
+
+
   // 事件监听
   on: (channel: string, callback: (...args: any[]) => void) => void
   off: (channel: string, callback: (...args: any[]) => void) => void
@@ -86,6 +97,16 @@ const electronAPI: ElectronAPI = {
   clipboard: {
     readText: () => ipcRenderer.sendSync('clipboard:readText'),
     writeText: (text: string) => ipcRenderer.invoke('clipboard:writeText', text)
+  },
+
+  // 文件操作
+  readFile: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
+
+  // FFmpeg 处理
+  ffmpeg: {
+    checkAudioMetadata: (filePath: string) => ipcRenderer.invoke('ffmpeg:checkAudioMetadata', filePath),
+    extractAudioCover: (filePath: string) => ipcRenderer.invoke('ffmpeg:extractAudioCover', filePath),
+    extractVideoThumbnail: (filePath: string) => ipcRenderer.invoke('ffmpeg:extractVideoThumbnail', filePath)
   },
 
   // 应用信息

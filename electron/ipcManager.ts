@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow, dialog, Notification, clipboard } from 'electron'
 import { BROADCAST_CHANNELS, handleBroadcast, registerBroadcastHandlers } from './broadcastManager'
 import { createBrowserWindow } from './windowManager'
+import { ffmpegUtils } from './ffmpegManager'
 
 /**
  * IPC 处理器类型定义
@@ -153,6 +154,46 @@ export class IPCHandlerManager {
       },
       type: 'handle'
     })
+
+    // 文件读取
+    this.addChannel('file:read', {
+      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
+        try {
+          const fs = require('fs')
+          const buffer = fs.readFileSync(filePath)
+          return {
+            buffer: buffer.toString('base64'),
+            fileName: filePath.split(/[/\\]/).pop() || 'unknown'
+          }
+        } catch (error) {
+          throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+      },
+      type: 'handle'
+    })
+
+    // FFmpeg处理
+    this.addChannel('ffmpeg:checkAudioMetadata', {
+      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
+        return await ffmpegUtils.checkAudioMetadata(filePath)
+      },
+      type: 'handle'
+    })
+
+    this.addChannel('ffmpeg:extractAudioCover', {
+      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
+        return await ffmpegUtils.extractAudioCover(filePath)
+      },
+      type: 'handle'
+    })
+
+    this.addChannel('ffmpeg:extractVideoThumbnail', {
+      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
+        return await ffmpegUtils.extractVideoThumbnail(filePath)
+      },
+      type: 'handle'
+    })
+
   }
 
   /**

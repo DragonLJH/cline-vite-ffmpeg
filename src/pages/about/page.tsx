@@ -5,30 +5,30 @@ const AboutPage: React.FC = () => {
   const { t } = useTranslation()
   const techStack = [
     {
-      title: t('pages.about.techCategories.frontend'),
-      items: [t('pages.about.techItems.react'), t('pages.about.techItems.typescript'), t('pages.about.techItems.router')]
+      title: t('pages_about_techCategories_frontend'),
+      items: [t('pages_about_techItems_react'), t('pages_about_techItems_typescript'), t('pages_about_techItems_router')]
     },
     {
-      title: t('pages.about.techCategories.build'),
-      items: [t('pages.about.techItems.vite'), t('pages.about.techItems.electronBuilder')]
+      title: t('pages_about_techCategories_build'),
+      items: [t('pages_about_techItems_vite'), t('pages_about_techItems_electronBuilder')]
     },
     {
-      title: t('pages.about.techCategories.state'),
-      items: [t('pages.about.techItems.zustand'), t('pages.about.techItems.hooks')]
+      title: t('pages_about_techCategories_state'),
+      items: [t('pages_about_techItems_zustand'), t('pages_about_techItems_hooks')]
     },
     {
-      title: t('pages.about.techCategories.styling'),
-      items: [t('pages.about.techItems.tailwind'), t('pages.about.techItems.scss'), t('pages.about.techItems.responsive')]
+      title: t('pages_about_techCategories_styling'),
+      items: [t('pages_about_techItems_tailwind'), t('pages_about_techItems_scss'), t('pages_about_techItems_responsive')]
     }
   ]
 
   const features = [
-    t('pages.about.features.0'),
-    t('pages.about.features.1'),
-    t('pages.about.features.2'),
-    t('pages.about.features.3'),
-    t('pages.about.features.4'),
-    t('pages.about.features.5')
+    t('pages_about_features_1'),
+    t('pages_about_features_2'),
+    t('pages_about_features_3'),
+    t('pages_about_features_4'),
+    t('pages_about_features_5'),
+    t('pages_about_features_6')
   ]
 
   return (
