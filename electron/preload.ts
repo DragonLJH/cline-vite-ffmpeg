@@ -61,9 +61,8 @@ interface ElectronAPI {
 
   // FFmpeg 处理
   ffmpeg: {
-    checkAudioMetadata: (filePath: string) => Promise<{ hasCover: boolean }>
-    extractAudioCover: (filePath: string) => Promise<string | null>
-    extractVideoThumbnail: (filePath: string) => Promise<string | null>
+    run: (params: any) => void
+    onProgress: (callback: (data: any) => void) => void
   }
 
 
@@ -104,9 +103,17 @@ const electronAPI: ElectronAPI = {
 
   // FFmpeg 处理
   ffmpeg: {
-    checkAudioMetadata: (filePath: string) => ipcRenderer.invoke('ffmpeg:checkAudioMetadata', filePath),
-    extractAudioCover: (filePath: string) => ipcRenderer.invoke('ffmpeg:extractAudioCover', filePath),
-    extractVideoThumbnail: (filePath: string) => ipcRenderer.invoke('ffmpeg:extractVideoThumbnail', filePath)
+    run: (params: any) => ipcRenderer.invoke("ffmpeg:run", params),
+    onProgress: (callback: (data: any) => void) => {
+      const listener = (_: any, data: any) => {
+        callback(data)
+      }
+      ipcRenderer.on("ffmpeg:progress", listener)
+      // 👇 返回取消监听（很重要）
+      return () => {
+        ipcRenderer.removeListener("ffmpeg:progress", listener)
+      }
+    }
   },
 
   // 应用信息

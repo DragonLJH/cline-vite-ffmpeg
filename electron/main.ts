@@ -1,6 +1,5 @@
 import { app, BrowserWindow } from 'electron'
-import { ipcHandlerManager } from './ipcManager'
-import { createBrowserWindow } from './windowManager'
+import { ipcHandlerManager, createBrowserWindow } from './manager'
 import { appConfig } from './config'
 
 let mainWindow: BrowserWindow

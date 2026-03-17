@@ -1,6 +1,6 @@
 import { BrowserWindow, app } from 'electron'
 import * as path from 'path'
-import { loadWindowURL } from './utils'
+import { loadWindowURL } from '../utils'
 
 /**
  * 窗口选项接口

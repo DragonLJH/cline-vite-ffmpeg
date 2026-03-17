@@ -1,7 +1,8 @@
 import { ipcMain, BrowserWindow, dialog, Notification, clipboard } from 'electron'
 import { BROADCAST_CHANNELS, handleBroadcast, registerBroadcastHandlers } from './broadcastManager'
 import { createBrowserWindow } from './windowManager'
-import { ffmpegUtils } from './ffmpegManager'
+import { ffmpegManager } from './ffmpegManager'
+import { FFmpegProgress } from "../ffmpeg/progressParser"
 
 /**
  * IPC 处理器类型定义
@@ -173,23 +174,37 @@ export class IPCHandlerManager {
     })
 
     // FFmpeg处理
-    this.addChannel('ffmpeg:checkAudioMetadata', {
-      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
-        return await ffmpegUtils.checkAudioMetadata(filePath)
+    this.addChannel('ffmpeg:run', {
+      handler: async (event: Electron.IpcMainInvokeEvent, params: any) => {
+        return await ffmpegManager.run(params, ({
+          taskId,
+          progress
+        }: {
+          taskId: string
+          progress: FFmpegProgress
+        }) => {
+          event.sender.send("ffmpeg:progress", {
+            taskId,
+            progress
+          })
+        })
       },
       type: 'handle'
     })
-
-    this.addChannel('ffmpeg:extractAudioCover', {
-      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
-        return await ffmpegUtils.extractAudioCover(filePath)
-      },
-      type: 'handle'
-    })
-
-    this.addChannel('ffmpeg:extractVideoThumbnail', {
-      handler: async (event: Electron.IpcMainInvokeEvent, filePath: string) => {
-        return await ffmpegUtils.extractVideoThumbnail(filePath)
+    this.addChannel('ffmpeg:run', {
+      handler: async (event: Electron.IpcMainInvokeEvent, params: any) => {
+        return await ffmpegManager.run(params, ({
+          taskId,
+          progress
+        }: {
+          taskId: string
+          progress: FFmpegProgress
+        }) => {
+          event.sender.send("ffmpeg:progress", {
+            taskId,
+            progress
+          })
+        })
       },
       type: 'handle'
     })

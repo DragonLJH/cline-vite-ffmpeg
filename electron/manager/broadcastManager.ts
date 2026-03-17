@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { broadcastToWindows } from './utils'
+import { broadcastToWindows } from '../utils'
 
 /**
  * 广播配置接口
