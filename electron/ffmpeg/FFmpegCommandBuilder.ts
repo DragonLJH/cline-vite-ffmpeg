@@ -192,6 +192,20 @@ export class FFmpegCommandBuilder {
   // ========================
   // build
   // ========================
+  
+  /**
+   * 处理文件路径
+   * 在 Node.js spawn 中，不需要手动添加双引号，spawn 会自动处理参数
+   */
+  private quotePath(filePath: string): string {
+    // 移除可能存在的双引号，让 spawn 自动处理
+    if (filePath.startsWith('"') && filePath.endsWith('"')) {
+      return filePath.slice(1, -1)
+    }
+    
+    return filePath
+  }
+
   build(): string[] {
 
     const args: string[] = []
@@ -202,19 +216,33 @@ export class FFmpegCommandBuilder {
     // inputs
     this.inputs.forEach(input => {
       args.push(...input.options)
-      args.push("-i", input.file)
+      args.push("-i", this.quotePath(input.file))
     })
 
     // filter
     if (this.filters.length > 0) {
-      args.push("-vf", this.filters.join(","))
+      // 当有多个输入文件时，需要使用 -filter_complex
+      if (this.inputs.length > 1) {
+        // 为 overlay filter 添加输入流标记
+        const filterWithStreams = this.filters.map(filter => {
+          if (filter.startsWith("overlay=")) {
+            return `[0:v][1:v]${filter}`
+          }
+          return filter
+        })
+        args.push("-filter_complex", filterWithStreams.join(";"))
+      } else {
+        args.push("-vf", this.filters.join(","))
+      }
     }
 
     // output args
     args.push(...this.outputArgs)
 
     // outputs
-    args.push(...this.outputs)
+    this.outputs.forEach(output => {
+      args.push(this.quotePath(output))
+    })
 
     return args
   }

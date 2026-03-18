@@ -1,522 +1,578 @@
-import React, { useState, useRef, useCallback, useContext, createContext } from 'react'
-import { UploadProps, UploadFile, UploadState, UploadContextValue } from './types'
-import './Upload.scss'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
+import { UploadProps, FileItem, FileCategory } from './types'
 
-// 文件路径转换为File对象的辅助函数
-const convertFilePathsToFiles = async (filePaths: string[]): Promise<File[]> => {
-  if (!window.electronAPI) {
-    throw new Error('Electron API not available')
+// 文件类型配置映射
+const FILE_TYPE_CONFIG: Record<string, { category: FileCategory; icon: string }> = {
+  // 图片类型
+  'image': { category: 'image', icon: '🖼️' },
+  // 音频类型
+  'audio': { category: 'audio', icon: '🎵' },
+  // 视频类型
+  'video': { category: 'video', icon: '🎬' },
+  // 文档类型
+  'pdf': { category: 'document', icon: '📄' },
+  'word': { category: 'document', icon: '📝' },
+  'excel': { category: 'document', icon: '📊' },
+  'powerpoint': { category: 'document', icon: '📑' },
+  'text': { category: 'document', icon: '📃' },
+  // 压缩包类型
+  'zip': { category: 'archive', icon: '📦' },
+  'rar': { category: 'archive', icon: '📦' },
+  '7z': { category: 'archive', icon: '📦' },
+  'tar': { category: 'archive', icon: '📦' },
+  'gz': { category: 'archive', icon: '📦' },
+  // 默认
+  'default': { category: 'other', icon: '📎' }
+}
+
+// MIME 类型到扩展名的映射
+const MIME_TO_EXTENSION: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+  'image/bmp': 'bmp',
+  'image/tiff': 'tiff',
+  'audio/mpeg': 'mp3',
+  'audio/wav': 'wav',
+  'audio/ogg': 'ogg',
+  'audio/flac': 'flac',
+  'audio/aac': 'aac',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/ogg': 'ogg',
+  'video/quicktime': 'mov',
+  'video/x-msvideo': 'avi',
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'text/plain': 'txt',
+  'application/zip': 'zip',
+  'application/x-rar-compressed': 'rar',
+  'application/x-7z-compressed': '7z',
+  'application/x-tar': 'tar',
+  'application/gzip': 'gz'
+}
+
+/**
+ * 根据文件名或 MIME 类型获取文件扩展名
+ */
+const getFileExtension = (fileName: string, mimeType?: string): string => {
+  // 优先从文件名获取扩展名
+  const nameParts = fileName.split('.')
+  if (nameParts.length > 1) {
+    return nameParts.pop()?.toLowerCase() || ''
   }
-
-  const files: File[] = []
   
-  for (const filePath of filePaths) {
-    try {
-      // 通过主进程读取文件
-      const { buffer, fileName } = await window.electronAPI.readFile(filePath)
-      
-      // 将base64转换为ArrayBuffer
-      const binaryString = atob(buffer)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-      
-      // 创建File对象
-      const file = new File([bytes], fileName, {
-        type: getFileTypeFromPath(filePath)
-      })
-      
-      files.push(file)
-    } catch (error) {
-      console.error(`Failed to read file ${filePath}:`, error)
+  // 从 MIME 类型获取扩展名
+  if (mimeType && MIME_TO_EXTENSION[mimeType]) {
+    return MIME_TO_EXTENSION[mimeType]
+  }
+  
+  return ''
+}
+
+/**
+ * 根据扩展名获取文件类型配置
+ */
+const getFileTypeConfig = (extension: string, mimeType?: string): { category: FileCategory; icon: string } => {
+  // 检查 MIME 类型前缀
+  if (mimeType) {
+    const mimePrefix = mimeType.split('/')[0]
+    if (mimePrefix === 'image' || mimePrefix === 'audio' || mimePrefix === 'video') {
+      return FILE_TYPE_CONFIG[mimePrefix]
     }
   }
   
-  return files
-}
-
-// 根据文件路径推断文件类型
-const getFileTypeFromPath = (filePath: string): string => {
-  const extension = filePath.split('.').pop()?.toLowerCase()
-  
-  if (!extension) return 'application/octet-stream'
-  
-  const typeMap: Record<string, string> = {
-    // 图片类型
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'bmp': 'image/bmp',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    
-    // 视频类型
-    'mp4': 'video/mp4',
-    'avi': 'video/x-msvideo',
-    'mov': 'video/quicktime',
-    'wmv': 'video/x-ms-wmv',
-    'flv': 'video/x-flv',
-    'webm': 'video/webm',
-    'mkv': 'video/x-matroska',
-    
-    // 音频类型
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    'ogg': 'audio/ogg',
-    'flac': 'audio/flac',
-    'aac': 'audio/aac',
-    
-    // 文档类型
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'txt': 'text/plain',
-    'json': 'application/json',
-    'xml': 'application/xml'
-  }
-  
-  return typeMap[extension] || 'application/octet-stream'
-}
-
-// 从accept字符串中提取文件扩展名
-const getExtensionsFromAccept = (accept: string): string[] => {
-  if (!accept) return []
-  
-  // 处理常见的accept格式
-  const extensions: string[] = []
-  
-  // 分割accept字符串（支持逗号分隔）
-  const acceptTypes = accept.split(',').map(type => type.trim())
-  
-  for (const type of acceptTypes) {
-    if (type.startsWith('.')) {
-      // 直接是扩展名，如 .jpg, .png
-      const ext = type.substring(1).toLowerCase()
-      if (ext) extensions.push(ext)
-    } else if (type.includes('/')) {
-      // MIME类型，如 image/*, video/mp4
-      const [category, subtype] = type.split('/')
-      
-      if (category === 'image') {
-        extensions.push('jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg')
-      } else if (category === 'video') {
-        extensions.push('mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv')
-      } else if (category === 'audio') {
-        extensions.push('mp3', 'wav', 'ogg', 'flac', 'aac')
-      } else if (type === 'application/pdf') {
-        extensions.push('pdf')
-      } else if (type === 'text/plain') {
-        extensions.push('txt')
-      }
+  // 检查扩展名
+  if (extension) {
+    // 图片扩展名
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico', 'avif'].includes(extension)) {
+      return FILE_TYPE_CONFIG['image']
+    }
+    // 音频扩展名
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].includes(extension)) {
+      return FILE_TYPE_CONFIG['audio']
+    }
+    // 视频扩展名
+    if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'wmv', 'flv', 'm4v'].includes(extension)) {
+      return FILE_TYPE_CONFIG['video']
+    }
+    // PDF
+    if (extension === 'pdf') {
+      return FILE_TYPE_CONFIG['pdf']
+    }
+    // Word 文档
+    if (['doc', 'docx'].includes(extension)) {
+      return FILE_TYPE_CONFIG['word']
+    }
+    // Excel 表格
+    if (['xls', 'xlsx', 'csv'].includes(extension)) {
+      return FILE_TYPE_CONFIG['excel']
+    }
+    // PowerPoint 演示文稿
+    if (['ppt', 'pptx'].includes(extension)) {
+      return FILE_TYPE_CONFIG['powerpoint']
+    }
+    // 文本文件
+    if (['txt', 'md', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'conf'].includes(extension)) {
+      return FILE_TYPE_CONFIG['text']
+    }
+    // 压缩包
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(extension)) {
+      return FILE_TYPE_CONFIG[extension] || FILE_TYPE_CONFIG['zip']
     }
   }
   
-  // 去重并返回
-  return [...new Set(extensions)]
+  return FILE_TYPE_CONFIG['default']
 }
 
-// 创建 Context
-const UploadContext = createContext<UploadContextValue | null>(null)
-
-// Hook 用于访问上传状态
-export const useUpload = () => {
-  const context = useContext(UploadContext)
-  if (!context) {
-    throw new Error('useUpload must be used within an UploadProvider')
-  }
-  return context
-}
-
-// 文件大小格式化
+/**
+ * 格式化文件大小
+ */
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B'
   const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// 生成文件预览
-const generateFilePreview = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        resolve(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    } else if (file.type.startsWith('video/')) {
-      // 视频预览可以生成缩略图，这里简化处理
-      resolve('')
-    } else {
-      resolve('')
-    }
-  })
+/**
+ * 判断是否为媒体文件（支持预览）
+ */
+const isMediaFile = (category: FileCategory): boolean => {
+  return category === 'image' || category === 'audio' || category === 'video'
 }
 
-// 文件类型图标
-const getFileIcon = (fileType: string): string => {
-  if (fileType.startsWith('image/')) return '🖼️'
-  if (fileType.startsWith('video/')) return '🎬'
-  if (fileType === 'application/pdf') return '📄'
-  if (fileType.includes('document') || fileType.includes('word')) return '📝'
-  if (fileType.includes('archive') || fileType.includes('zip')) return '📦'
-  return '📄'
-}
-
-// 上传组件主体
+/**
+ * 上传组件
+ */
 const Upload: React.FC<UploadProps> = ({
+  label,
   accept,
-  maxSize = 10,
   multiple = false,
-  disabled = false,
-  onFileSelect,
-  onUpload,
+  maxSize,
+  value,
+  onChange,
   onError,
-  uploadText = '拖拽文件到此处或点击选择',
-  buttonText = '选择文件',
+  disabled = false,
+  showPreview = true,
   className = '',
-  dragActiveClassName = '',
+  // 兼容旧 API 的属性
+  uploadText,
+  buttonText,
   showFileList = true,
-  maxFiles,
-  renderPreview,
-  autoUpload = false,
-  beforeUpload,
-  customUpload,
-  children
+  onFileSelect,
+  ...props
 }) => {
-  const [state, setState] = useState<UploadState>({
-    files: [],
-    isDragging: false,
-    isUploading: false
-  })
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  // 添加文件
-  const addFiles = useCallback(async (newFiles: File[]) => {
-    const validFiles: File[] = []
-    
-    for (const file of newFiles) {
-      // 检查文件大小
-      if (maxSize && file.size > maxSize * 1024 * 1024) {
-        onError?.(`文件 ${file.name} 超过大小限制 ${maxSize}MB`)
-        continue
-      }
-
-      // 检查文件类型
-      if (accept && !file.type.match(accept)) {
-        onError?.(`文件 ${file.name} 类型不支持`)
-        continue
-      }
-
-      // 检查文件数量限制
-      if (maxFiles && state.files.length >= maxFiles) {
-        onError?.(`最多只能上传 ${maxFiles} 个文件`)
-        break
-      }
-
-      // 检查 beforeUpload
-      if (beforeUpload) {
-        try {
-          const result = await beforeUpload(file)
-          if (!result) continue
-        } catch (error) {
-          onError?.(`文件 ${file.name} 验证失败`)
-          continue
-        }
-      }
-
-      validFiles.push(file)
-    }
-
-    if (validFiles.length === 0) return
-
-    const uploadFiles: UploadFile[] = await Promise.all(
-      validFiles.map(async (file) => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        preview: await generateFilePreview(file),
-        status: 'pending' as const,
-        progress: 0,
-        error: undefined
-      }))
-    )
-
-    setState(prev => ({
-      ...prev,
-      files: multiple ? [...prev.files, ...uploadFiles] : uploadFiles
-    }))
-
-    onFileSelect?.(validFiles)
-
-    // 自动上传
-    if (autoUpload) {
-      uploadFiles.forEach(file => uploadFile(file.id))
-    }
-  }, [state.files.length, maxSize, accept, maxFiles, multiple, onFileSelect, onError, beforeUpload, autoUpload])
-
-  // 移除文件
-  const removeFile = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      files: prev.files.filter(file => file.id !== id)
-    }))
-  }, [])
-
-  // 清空文件
-  const clearFiles = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      files: []
-    }))
-  }, [])
-
-  // 上传单个文件
-  const uploadFile = useCallback(async (id: string) => {
-    const file = state.files.find(f => f.id === id)
-    if (!file) return
-
-    setState(prev => ({
-      ...prev,
-      files: prev.files.map(f => 
-        f.id === id ? { ...f, status: 'uploading' as const, progress: 0 } : f
-      ),
-      isUploading: true
-    }))
-
-    try {
-      if (customUpload) {
-        await customUpload(file.file)
-      } else if (onUpload) {
-        await onUpload(file.file)
+  // 同步外部 value 到内部状态
+  useEffect(() => {
+    if (value !== undefined) {
+      if (value === null) {
+        setFiles([])
+      } else if (Array.isArray(value)) {
+        const newFileItems: FileItem[] = value.map(file => {
+          const extension = getFileExtension(file.name, file.type)
+          const config = getFileTypeConfig(extension, file.type)
+          const previewUrl = isMediaFile(config.category) ? URL.createObjectURL(file) : undefined
+          return { file, category: config.category, previewUrl }
+        })
+        setFiles(newFileItems)
       } else {
-        // 模拟上传
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise(resolve => setTimeout(resolve, 100))
-          setState(prev => ({
-            ...prev,
-            files: prev.files.map(f => 
-              f.id === id ? { ...f, progress: i } : f
-            )
-          }))
-        }
+        const extension = getFileExtension(value.name, value.type)
+        const config = getFileTypeConfig(extension, value.type)
+        const previewUrl = isMediaFile(config.category) ? URL.createObjectURL(value) : undefined
+        setFiles([{ file: value, category: config.category, previewUrl }])
       }
-
-      setState(prev => ({
-        ...prev,
-        files: prev.files.map(f => 
-          f.id === id ? { ...f, status: 'success' as const, progress: 100 } : f
-        )
-      }))
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        files: prev.files.map(f => 
-          f.id === id 
-            ? { ...f, status: 'error' as const, error: error instanceof Error ? error.message : '上传失败' }
-            : f
-        )
-      }))
-      onError?.(`文件 ${file.name} 上传失败`)
     }
-  }, [state.files, onUpload, customUpload, onError])
+  }, [value])
 
-  // 上传所有文件
-  const uploadAll = useCallback(async () => {
-    const pendingFiles = state.files.filter(f => f.status === 'pending')
-    if (pendingFiles.length === 0) return
-
-    for (const file of pendingFiles) {
-      await uploadFile(file.id)
+  // 清理预览 URL
+  useEffect(() => {
+    return () => {
+      files.forEach(item => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl)
+        }
+      })
     }
-  }, [state.files, uploadFile])
+  }, [])
 
-  // 重试上传
-  const retryUpload = useCallback(async (id: string) => {
-    const file = state.files.find(f => f.id === id)
-    if (!file) return
+  /**
+   * 验证文件
+   */
+  const validateFile = useCallback((file: File): string | null => {
+    // 检查文件大小
+    if (maxSize && file.size > maxSize) {
+      return `文件 "${file.name}" 超过最大限制 ${formatFileSize(maxSize)}`
+    }
+    
+    // 检查文件类型
+    if (accept) {
+      const acceptedTypes = accept.split(',').map(t => t.trim().toLowerCase())
+      const fileExtension = getFileExtension(file.name, file.type)
+      const mimeType = file.type.toLowerCase()
+      
+      const isAccepted = acceptedTypes.some(type => {
+        // 检查通配符，如 image/*
+        if (type.endsWith('/*')) {
+          const mainType = type.replace('/*', '')
+          return mimeType.startsWith(mainType + '/')
+        }
+        // 检查扩展名，如 .jpg
+        if (type.startsWith('.')) {
+          return fileExtension === type.slice(1).toLowerCase()
+        }
+        // 检查完整 MIME 类型
+        return mimeType === type
+      })
+      
+      if (!isAccepted) {
+        return `文件 "${file.name}" 类型不支持`
+      }
+    }
+    
+    return null
+  }, [accept, maxSize])
 
-    setState(prev => ({
-      ...prev,
-      files: prev.files.map(f => 
-        f.id === id 
-          ? { ...f, status: 'pending' as const, progress: 0, error: undefined }
-          : f
-      )
-    }))
+  /**
+   * 处理文件选择
+   */
+  const handleFiles = useCallback((newFiles: FileList | null) => {
+    if (!newFiles || newFiles.length === 0) return
+    
+    const validFiles: FileItem[] = []
+    let errorMessage: string | null = null
+    
+    Array.from(newFiles).forEach(file => {
+      const error = validateFile(file)
+      if (error) {
+        errorMessage = error
+        return
+      }
+      
+      const extension = getFileExtension(file.name, file.type)
+      const config = getFileTypeConfig(extension, file.type)
+      const previewUrl = isMediaFile(config.category) ? URL.createObjectURL(file) : undefined
+      
+      validFiles.push({
+        file,
+        category: config.category,
+        previewUrl
+      })
+    })
+    
+    if (errorMessage && onError) {
+      onError(errorMessage)
+    }
+    
+    if (validFiles.length > 0) {
+      const updatedFiles = multiple ? [...files, ...validFiles] : validFiles
+      
+      // 清理旧的预览 URL
+      if (!multiple) {
+        files.forEach(item => {
+          if (item.previewUrl) {
+            URL.revokeObjectURL(item.previewUrl)
+          }
+        })
+      }
+      
+      setFiles(updatedFiles)
+      
+      // Debug log
+      console.log('[Upload] Files selected:', validFiles.map(f => f.file.name))
+      console.log('[Upload] Calling onChange with:', multiple ? updatedFiles.map(f => f.file) : updatedFiles[0].file)
+      
+      onChange?.(multiple ? updatedFiles.map(f => f.file) : updatedFiles[0].file)
+      
+      // 兼容旧 API：调用 onFileSelect
+      if (onFileSelect) {
+        console.log('[Upload] Calling onFileSelect with:', validFiles.map(f => f.file))
+        onFileSelect(validFiles.map(f => f.file))
+      }
+    }
+  }, [files, multiple, validateFile, onChange, onError])
 
-    await uploadFile(id)
-  }, [state.files, uploadFile])
+  /**
+   * 处理输入框变化
+   */
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files)
+    // 重置 input 值，允许重复选择同一文件
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
+  }, [handleFiles])
 
-  // 拖拽事件处理
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  /**
+   * 处理拖拽
+   */
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (!disabled) {
-      setState(prev => ({ ...prev, isDragging: true }))
+      setIsDragging(true)
     }
   }, [disabled])
 
-  const handleDragLeave = useCallback(() => {
-    setState(prev => ({ ...prev, isDragging: false }))
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setState(prev => ({ ...prev, isDragging: false }))
+    e.stopPropagation()
+    setIsDragging(false)
     
     if (disabled) return
+    
+    handleFiles(e.dataTransfer.files)
+  }, [disabled, handleFiles])
 
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) {
-      addFiles(files)
+  /**
+   * 删除文件
+   */
+  const handleRemove = useCallback((index: number) => {
+    const newFiles = [...files]
+    const removedItem = newFiles.splice(index, 1)[0]
+    
+    // 清理预览 URL
+    if (removedItem.previewUrl) {
+      URL.revokeObjectURL(removedItem.previewUrl)
     }
-  }, [disabled, addFiles])
+    
+    setFiles(newFiles)
+    onChange?.(multiple ? newFiles.map(f => f.file) : null)
+  }, [files, multiple, onChange])
 
-  const triggerFileInput = useCallback(async () => {
-    if (disabled) return
-
-    try {
-      // 使用主进程的原生文件对话框
-      const filePaths = await window.electronAPI.openFileDialog({
-        title: '选择文件',
-        filters: accept ? [
-          { name: '支持的文件', extensions: getExtensionsFromAccept(accept) }
-        ] : undefined,
-        properties: multiple ? ['openFile', 'multiSelections'] : ['openFile']
-      })
-
-      if (filePaths && filePaths.length > 0) {
-        // 将文件路径转换为File对象
-        const files = await convertFilePathsToFiles(filePaths)
-        addFiles(files)
-      }
-    } catch (error) {
-      console.error('Failed to open file dialog:', error)
-      onError?.('打开文件选择对话框失败')
+  /**
+   * 点击上传区域
+   */
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      inputRef.current?.click()
     }
-  }, [disabled, accept, multiple, addFiles, onError])
+  }, [disabled])
 
-  // 渲染文件项
-  const renderFileItem = (file: UploadFile) => {
-    const icon = getFileIcon(file.type)
-    const statusIcon = file.status === 'success' ? '✅' : 
-                      file.status === 'error' ? '❌' : 
-                      file.status === 'uploading' ? '⏳' : '⏳'
+  /**
+   * 渲染文件预览
+   */
+  const renderPreview = useCallback((item: FileItem) => {
+    if (!showPreview || !isMediaFile(item.category)) {
+      return null
+    }
+    
+    const { file, previewUrl, category } = item
+    
+    if (category === 'image' && previewUrl) {
+      return (
+        <img
+          src={previewUrl}
+          alt={file.name}
+          className="w-full h-full object-cover"
+        />
+      )
+    }
+    
+    if (category === 'audio' && previewUrl) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+          <audio
+            src={previewUrl}
+            controls
+            className="w-full max-w-[120px]"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )
+    }
+    
+    if (category === 'video' && previewUrl) {
+      return (
+        <video
+          src={previewUrl}
+          className="w-full h-full object-cover"
+          muted
+          loop
+          onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+          onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
+        />
+      )
+    }
+    
+    return null
+  }, [showPreview])
 
+  /**
+   * 渲染文件项
+   */
+  const renderFileItem = useCallback((item: FileItem, index: number) => {
+    const extension = getFileExtension(item.file.name, item.file.type)
+    const config = getFileTypeConfig(extension, item.file.type)
+    const hasPreview = showPreview && isMediaFile(item.category) && item.previewUrl
+    
     return (
-      <div key={file.id} className={`upload-file-item ${file.status}`}>
-        <div className="file-info">
-          <div className="file-icon">{icon}</div>
-          <div className="file-details">
-            <div className="file-name">{file.name}</div>
-            <div className="file-meta">
-              <span>{formatFileSize(file.size)}</span>
-              {file.status === 'uploading' && (
-                <span className="upload-progress">{file.progress}%</span>
-              )}
-            </div>
+      <div
+        key={`${item.file.name}-${item.file.size}-${index}`}
+        className={`
+          flex items-center gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg
+          border border-[var(--border-primary)] transition-all
+          hover:shadow-md group
+        `}
+      >
+        {/* 预览区域 */}
+        <div className={`
+          w-12 h-12 flex-shrink-0 rounded-md overflow-hidden
+          bg-[var(--bg-primary)] flex items-center justify-center
+          ${hasPreview ? '' : 'text-2xl'}
+        `}>
+          {hasPreview ? renderPreview(item) : <span>{config.icon}</span>}
+        </div>
+        
+        {/* 文件信息 */}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-[var(--text-primary)] truncate">
+            {item.file.name}
           </div>
-          <div className="file-actions">
-            <span className="file-status">{statusIcon}</span>
-            {file.status === 'error' && (
-              <button 
-                className="retry-btn"
-                onClick={() => retryUpload(file.id)}
-                title="重试"
-              >
-                🔄
-              </button>
-            )}
-            <button 
-              className="remove-btn"
-              onClick={() => removeFile(file.id)}
-              title="删除"
-            >
-              🗑️
-            </button>
+          <div className="text-xs text-[var(--text-secondary)] mt-0.5">
+            {formatFileSize(item.file.size)} · {extension.toUpperCase() || '未知类型'}
+          </div>
+          {/* 置灰的文件路径信息 */}
+          <div className="text-xs text-[var(--text-secondary)] opacity-60 mt-0.5 truncate">
+            {item.file.webkitRelativePath || item.file.name}
           </div>
         </div>
         
-        {file.status === 'uploading' && (
-          <div className="upload-progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${file.progress}%` }}
-            ></div>
-          </div>
-        )}
-        
-        {file.error && (
-          <div className="file-error">{file.error}</div>
-        )}
+        {/* 删除按钮 */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleRemove(index)
+          }}
+          className={`
+            p-2 rounded-md text-red-500 hover:text-red-700
+            hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100
+            focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500
+          `}
+          disabled={disabled}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
       </div>
     )
-  }
-
-  const contextValue: UploadContextValue = {
-    state,
-    addFiles,
-    removeFile,
-    clearFiles,
-    uploadFile,
-    uploadAll,
-    retryUpload
-  }
+  }, [showPreview, renderPreview, handleRemove, disabled])
 
   return (
-    <UploadContext.Provider value={contextValue}>
-      <div className={`upload-container ${className} ${disabled ? 'disabled' : ''}`}>
-        {/* 主上传区域 */}
-        <div
-          className={`upload-dropzone ${state.isDragging ? dragActiveClassName || 'drag-active' : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={triggerFileInput}
-        >
-          <div className="upload-content">
-            {children || (
-              <>
-                <div className="upload-icon">📁</div>
-                <div className="upload-text">{uploadText}</div>
-                <button className="upload-button" disabled={disabled}>
-                  {buttonText}
-                </button>
-              </>
-            )}
+    <div className={`flex flex-col gap-2 ${className}`}>
+      {/* 标签 */}
+      {label && (
+        <label className="text-sm font-medium text-[var(--text-primary)]">
+          {label}
+        </label>
+      )}
+      
+      {/* 上传区域 */}
+      <div
+        onClick={handleClick}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`
+          relative border-2 border-dashed rounded-lg p-6
+          transition-all cursor-pointer
+          ${disabled 
+            ? 'border-[var(--border-primary)] opacity-50 cursor-not-allowed' 
+            : isDragging
+              ? 'border-blue-500 bg-blue-50/10'
+              : 'border-[var(--border-primary)] hover:border-blue-500 hover:bg-blue-50/5'
+          }
+        `}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          onChange={handleChange}
+          disabled={disabled}
+          className="hidden"
+          {...props}
+        />
+        
+        <div className="flex flex-col items-center gap-2 text-center">
+          {/* 上传图标 */}
+          <div className={`
+            w-12 h-12 rounded-full flex items-center justify-center
+            ${isDragging ? 'bg-blue-100 text-blue-600' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}
+          `}>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          </div>
+          
+          {/* 提示文字 */}
+          <div>
+            <p className="text-sm text-[var(--text-primary)]">
+              {isDragging ? '松开鼠标上传文件' : '点击或拖拽文件到此区域上传'}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
+              {accept ? `支持格式：${accept}` : '支持所有格式'}
+              {maxSize && ` · 最大 ${formatFileSize(maxSize)}`}
+              {multiple && ' · 支持多选'}
+            </p>
           </div>
         </div>
-
-        {/* 文件列表 */}
-        {showFileList && state.files.length > 0 && (
-          <div className="upload-file-list">
-            {state.files.map(renderFileItem)}
-            
-            {state.files.some(f => f.status === 'pending') && (
-              <div className="upload-actions">
-                <button 
-                  className="upload-all-btn"
-                  onClick={uploadAll}
-                  disabled={state.isUploading}
-                >
-                  🚀 上传所有文件
-                </button>
-                <button 
-                  className="clear-btn"
-                  onClick={clearFiles}
-                >
-                  🗑️ 清空列表
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
-    </UploadContext.Provider>
+      
+      {/* 文件列表 */}
+      {files.length > 0 && (
+        <div className="flex flex-col gap-2 mt-2">
+          {files.map((item, index) => renderFileItem(item, index))}
+        </div>
+      )}
+    </div>
   )
 }
 

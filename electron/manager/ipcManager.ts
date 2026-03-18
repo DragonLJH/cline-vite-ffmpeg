@@ -174,6 +174,7 @@ export class IPCHandlerManager {
     })
 
     // FFmpeg处理
+    // 转码（完整能力）
     this.addChannel('ffmpeg:run', {
       handler: async (event: Electron.IpcMainInvokeEvent, params: any) => {
         return await ffmpegManager.run(params, ({
@@ -191,9 +192,35 @@ export class IPCHandlerManager {
       },
       type: 'handle'
     })
-    this.addChannel('ffmpeg:run', {
-      handler: async (event: Electron.IpcMainInvokeEvent, params: any) => {
-        return await ffmpegManager.run(params, ({
+
+    // 截图（快速模式）
+    this.addChannel('ffmpeg:screenshot', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, time: string, output: string) => {
+        return await ffmpegManager.screenshot(input, time, output)
+      },
+      type: 'handle'
+    })
+
+    // 精确截图
+    this.addChannel('ffmpeg:screenshotAccurate', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, time: string, output: string) => {
+        return await ffmpegManager.screenshotAccurate(input, time, output)
+      },
+      type: 'handle'
+    })
+
+    // 裁剪视频
+    this.addChannel('ffmpeg:cut', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, start: string, duration: string, precise?: boolean) => {
+        return await ffmpegManager.cut(input, output, start, duration, precise)
+      },
+      type: 'handle'
+    })
+
+    // 添加视频水印
+    this.addChannel('ffmpeg:addWatermark', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarkImage: string, x?: number, y?: number) => {
+        return await ffmpegManager.addWatermark(input, output, watermarkImage, x, y, ({
           taskId,
           progress
         }: {

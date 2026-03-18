@@ -62,6 +62,10 @@ interface ElectronAPI {
   // FFmpeg 处理
   ffmpeg: {
     run: (params: any) => void
+    screenshot: (input: string, time: string, output: string) => void
+    screenshotAccurate: (input: string, time: string, output: string) => void
+    cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => void
+    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number) => void
     onProgress: (callback: (data: any) => void) => void
   }
 
@@ -103,7 +107,26 @@ const electronAPI: ElectronAPI = {
 
   // FFmpeg 处理
   ffmpeg: {
+    // 转码（完整能力）
     run: (params: any) => ipcRenderer.invoke("ffmpeg:run", params),
+    
+    // 截图（快速模式）
+    screenshot: (input: string, time: string, output: string) => 
+      ipcRenderer.invoke("ffmpeg:screenshot", input, time, output),
+    
+    // 精确截图
+    screenshotAccurate: (input: string, time: string, output: string) => 
+      ipcRenderer.invoke("ffmpeg:screenshotAccurate", input, time, output),
+    
+    // 裁剪视频
+    cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => 
+      ipcRenderer.invoke("ffmpeg:cut", input, output, start, duration, precise),
+    
+    // 添加视频水印
+    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number) => 
+      ipcRenderer.invoke("ffmpeg:addWatermark", input, output, watermarkImage, x, y),
+    
+    // 进度监听
     onProgress: (callback: (data: any) => void) => {
       const listener = (_: any, data: any) => {
         callback(data)
