@@ -68,6 +68,16 @@ interface ElectronAPI {
     extractVideoThumbnail: (filePath: string) => Promise<string | null>
   }
 
+  // 路径相关
+  paths: {
+    /** 获取默认输出文件路径 */
+    getDefaultOutputPath: (prefix?: string, extension?: string) => Promise<string>
+    /** 获取默认输出目录 */
+    getDefaultOutputDir: () => Promise<string>
+    /** 获取所有应用路径 */
+    getAppPaths: () => Promise<Record<string, string>>
+  }
+
   // 应用信息
   appInfo: {
     name: string

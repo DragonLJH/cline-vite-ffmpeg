@@ -69,6 +69,13 @@ interface ElectronAPI {
     onProgress: (callback: (data: any) => void) => void
   }
 
+  // 路径相关
+  paths: {
+    getDefaultOutputPath: (prefix?: string, extension?: string) => Promise<string>
+    getDefaultOutputDir: () => Promise<string>
+    getAppPaths: () => Promise<Record<string, string>>
+  }
+
 
   // 事件监听
   on: (channel: string, callback: (...args: any[]) => void) => void
@@ -137,6 +144,14 @@ const electronAPI: ElectronAPI = {
         ipcRenderer.removeListener("ffmpeg:progress", listener)
       }
     }
+  },
+
+  // 路径相关
+  paths: {
+    getDefaultOutputPath: (prefix?: string, extension?: string) => 
+      ipcRenderer.invoke("paths:getDefaultOutputPath", prefix, extension),
+    getDefaultOutputDir: () => ipcRenderer.invoke("paths:getDefaultOutputDir"),
+    getAppPaths: () => ipcRenderer.invoke("paths:getAppPaths")
   },
 
   // 应用信息

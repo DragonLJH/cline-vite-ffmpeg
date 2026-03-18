@@ -33,7 +33,7 @@ export class FFmpegExecutor {
 
   /**
    * 获取 FFmpeg 可执行文件路径
-   * 根据平台和环境动态构建路径
+   * 直接构建路径，避免在 app.ready 之前调用 getAppPaths
    */
   private getFFmpegPath(): string {
     const platform = process.platform
@@ -44,7 +44,6 @@ export class FFmpegExecutor {
     const basePath = app.getAppPath()
     const ffmpegPath = path.join(basePath, "public", "ffmpeg", ffmpegDir, ffmpegName)
 
-    console.log(`[FFmpegExecutor] Platform: ${platform}`)
     console.log(`[FFmpegExecutor] FFmpeg path: ${ffmpegPath}`)
 
     return ffmpegPath

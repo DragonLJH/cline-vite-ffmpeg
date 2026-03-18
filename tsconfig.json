@@ -19,6 +19,9 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["electron/**/*.ts"],
+  "include": [
+    "electron/main.ts",
+    "electron/preload.ts"
+  ],
   "exclude": ["build", "node_modules", "dist"]
 }

@@ -3,6 +3,7 @@ import { BROADCAST_CHANNELS, handleBroadcast, registerBroadcastHandlers } from '
 import { createBrowserWindow } from './windowManager'
 import { ffmpegManager } from './ffmpegManager'
 import { FFmpegProgress } from "../ffmpeg/progressParser"
+import { getAppPaths, getDefaultOutputPath, generateOutputFilename } from '../config'
 
 /**
  * IPC 处理器类型定义
@@ -232,6 +233,53 @@ export class IPCHandlerManager {
             progress
           })
         })
+      },
+      type: 'handle'
+    })
+
+    // ========== 路径相关 ==========
+    
+    // 获取默认输出文件路径
+    this.addChannel('paths:getDefaultOutputPath', {
+      handler: async (event: Electron.IpcMainInvokeEvent, prefix?: string, extension?: string) => {
+        return getDefaultOutputPath(prefix || 'output', extension || 'mp4')
+      },
+      type: 'handle'
+    })
+
+    // 获取默认输出目录
+    this.addChannel('paths:getDefaultOutputDir', {
+      handler: async (event: Electron.IpcMainInvokeEvent) => {
+        const paths = getAppPaths()
+        console.log('[IPC] getDefaultOutputDir called, returning:', paths.defaultOutputDir)
+        return paths.defaultOutputDir
+      },
+      type: 'handle'
+    })
+
+    // 获取所有应用路径
+    this.addChannel('paths:getAppPaths', {
+      handler: async (event: Electron.IpcMainInvokeEvent) => {
+        const paths = getAppPaths()
+        // 返回可序列化的路径对象
+        return {
+          appPath: paths.appPath,
+          userDataPath: paths.userDataPath,
+          appDataPath: paths.appDataPath,
+          tempPath: paths.tempPath,
+          ffmpegResourceDir: paths.ffmpegResourceDir,
+          ffmpegPath: paths.ffmpegPath,
+          defaultOutputDir: paths.defaultOutputDir,
+          cacheDir: paths.cacheDir,
+          logDir: paths.logDir,
+          uploadsDir: paths.uploadsDir,
+          watermarksDir: paths.watermarksDir,
+          exportsDir: paths.exportsDir,
+          documentsPath: paths.documentsPath,
+          downloadsPath: paths.downloadsPath,
+          desktopPath: paths.desktopPath,
+          homePath: paths.homePath
+        }
       },
       type: 'handle'
     })

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef,useEffect } from 'react'
 import { useTranslation } from '../../hooks/useTranslation'
 import { useWatermarkStore } from '@/stores/watermarkStore'
 import Upload from '@/components/common/Upload'
@@ -15,22 +15,34 @@ export const pageMeta = {
 }
 
 const WatermarkPage: React.FC = () => {
+  console.log('[WatermarkPage] Component render started')
+  
   const { t } = useTranslation()
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const {
     selectedFile,
     watermarkImage,
-    outputPath,
+    outputDir,
+    outputFileName,
     processedFile,
     isProcessing,
     progress,
+    initStore,
     setSelectedFile,
     setWatermarkImage,
-    setOutputPath,
+    setOutputDir,
+    setOutputFileName,
     addWatermark,
     resetState
   } = useWatermarkStore()
+  
+  console.log('[WatermarkPage] Current state:', {
+    selectedFile: selectedFile?.name,
+    watermarkImage: watermarkImage?.name,
+    outputDir,
+    outputFileName
+  })
 
   // 水印配置状态
   const [watermarkText, setWatermarkText] = useState('')
@@ -46,26 +58,29 @@ const WatermarkPage: React.FC = () => {
     }
   }
 
-  const handleSelectOutputPath = async () => {
+  const handleSelectOutputDir = async () => {
     try {
-      const result = await window.electronAPI.saveFileDialog({
-        title: '选择输出路径',
-        filters: [
-          { name: 'Video Files', extensions: ['mp4', 'avi', 'mov', 'mkv'] }
-        ],
-        defaultPath: selectedFile ? `watermarked_${selectedFile.name}` : 'watermarked_video.mp4'
+      const result = await window.electronAPI.openFileDialog({
+        title: '选择输出目录',
+        properties: ['openDirectory']
       })
 
-      if (result) {
-        setOutputPath(result)
+      if (result && result.length > 0) {
+        setOutputDir(result[0])
       }
     } catch (error) {
-      console.error('[WatermarkPage] Failed to select output path:', error)
+      console.error('[WatermarkPage] Failed to select output dir:', error)
     }
   }
 
+  // 组件挂载时初始化 store
+  useEffect(() => {
+    console.log('[WatermarkPage] Component mounted, calling initStore')
+    initStore()
+  }, [])
+
   const handleProcessWatermark = async () => {
-    if (!selectedFile || !watermarkImage || !outputPath) {
+    if (!selectedFile || !watermarkImage || !outputDir || !outputFileName) {
       console.error('[WatermarkPage] Missing required files or output path')
       return
     }
@@ -79,7 +94,7 @@ const WatermarkPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen p-8 bg-[var(--bg-primary)]">
+    <div className="min-h-screen p-8 bg-[var(--bg-primary)] pb-24">
       <div className="max-w-6xl mx-auto">
         {/* 头部区域 */}
         <div className="text-center mb-12">
@@ -180,26 +195,18 @@ const WatermarkPage: React.FC = () => {
                 )}
               </div>
 
-              {/* 输出路径选择 */}
+              {/* 输出文件名 */}
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  📁 输出路径
+                  📄 输出文件名
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={outputPath || ''}
-                    readOnly
-                    placeholder="选择输出路径..."
-                    className="flex-1 px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)]"
-                  />
-                  <button
-                    onClick={handleSelectOutputPath}
-                    className="px-4 py-3 bg-[var(--btn-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-card)]"
-                  >
-                    浏览
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  value={outputFileName || ''}
+                  onChange={(e) => setOutputFileName(e.target.value)}
+                  placeholder="输入文件名..."
+                  className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-[var(--text-primary)]"
+                />
               </div>
 
               <div>
@@ -274,7 +281,7 @@ const WatermarkPage: React.FC = () => {
               <div className="flex gap-4">
                 <button
                   onClick={handleProcessWatermark}
-                  disabled={!selectedFile || !watermarkImage || !outputPath || isProcessing}
+                  disabled={!selectedFile || !watermarkImage || !outputDir || !outputFileName || isProcessing}
                   className="flex-1 px-6 py-3 bg-[var(--btn-primary)] text-[var(--text-inverse)] rounded-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:bg-[var(--btn-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
@@ -353,6 +360,24 @@ const WatermarkPage: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* 底部输出目录栏 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] px-8 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-[var(--text-secondary)]">📁 输出目录:</span>
+            <span className="text-sm text-[var(--text-primary)] opacity-60">
+              {outputDir || '未设置输出目录'}
+            </span>
+          </div>
+          <button
+            onClick={handleSelectOutputDir}
+            className="px-4 py-2 bg-[var(--btn-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-card)] text-sm"
+          >
+            修改目录
+          </button>
+        </div>
       </div>
     </div>
   )

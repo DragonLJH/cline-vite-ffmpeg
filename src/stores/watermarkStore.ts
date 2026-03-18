@@ -3,13 +3,16 @@ import { create } from 'zustand'
 interface WatermarkState {
   selectedFile: File | null
   watermarkImage: File | null  // 水印图片
-  outputPath: string | null    // 输出路径
+  outputDir: string | null     // 输出目录
+  outputFileName: string | null // 输出文件名
   processedFile: File | null
   isProcessing: boolean
   progress: number
+  initStore: () => Promise<void>
   setSelectedFile: (file: File | null) => void
   setWatermarkImage: (file: File | null) => void
-  setOutputPath: (path: string) => void
+  setOutputDir: (dir: string) => void
+  setOutputFileName: (name: string) => void
   addWatermark: (config: WatermarkConfig) => Promise<void>
   resetState: () => void
 }
@@ -42,14 +45,33 @@ const getPositionCoords = (position: string): { x: number; y: number } => {
 export const useWatermarkStore = create<WatermarkState>((set, get) => ({
   selectedFile: null,
   watermarkImage: null,
-  outputPath: null,
+  outputDir: null,
+  outputFileName: null,
   processedFile: null,
   isProcessing: false,
   progress: 0,
 
+  initStore: async () => {
+    console.log('[WatermarkStore] initStore called')
+    try {
+      console.log('[WatermarkStore] Getting default output dir from main process...')
+      const defaultDir = await window.electronAPI.paths.getDefaultOutputDir()
+      console.log('[WatermarkStore] Got default output dir:', defaultDir)
+      set({ outputDir: defaultDir })
+    } catch (error) {
+      console.error('[WatermarkStore] Failed to get default output dir:', error)
+    }
+  },
+
   setSelectedFile: (file: File | null) => {
     console.log('[WatermarkStore] setSelectedFile called with:', file?.name)
     set({ selectedFile: file })
+    // 自动生成默认文件名
+    if (file) {
+      const defaultFileName = `watermarked_${file.name}`
+      console.log('[WatermarkStore] Setting default filename:', defaultFileName)
+      set({ outputFileName: defaultFileName })
+    }
     console.log('[WatermarkStore] selectedFile updated:', get().selectedFile?.name)
   },
 
@@ -58,15 +80,20 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     set({ watermarkImage: file })
   },
 
-  setOutputPath: (path: string) => {
-    console.log('[WatermarkStore] setOutputPath called with:', path)
-    set({ outputPath: path })
+  setOutputDir: (dir: string) => {
+    console.log('[WatermarkStore] setOutputDir called with:', dir)
+    set({ outputDir: dir })
+  },
+
+  setOutputFileName: (name: string) => {
+    console.log('[WatermarkStore] setOutputFileName called with:', name)
+    set({ outputFileName: name })
   },
 
   addWatermark: async (config: WatermarkConfig) => {
-    const { selectedFile, watermarkImage, outputPath } = get()
+    const { selectedFile, watermarkImage, outputDir, outputFileName } = get()
     
-    if (!selectedFile || !watermarkImage || !outputPath) {
+    if (!selectedFile || !watermarkImage || !outputDir || !outputFileName) {
       console.error('[WatermarkStore] Missing required files or output path')
       return
     }
@@ -89,9 +116,13 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       // 获取坐标
       const coords = getPositionCoords(config.position)
       
+      // 拼接完整输出路径
+      const separator = outputDir.endsWith('/') || outputDir.endsWith('\\') ? '' : '/'
+      const finalOutputPath = `${outputDir}${separator}${outputFileName}`
+      
       console.log('[WatermarkStore] Calling addWatermark with:', {
         input: inputPath,
-        output: outputPath,
+        output: finalOutputPath,
         watermarkImage: watermarkImagePath,
         x: coords.x,
         y: coords.y
@@ -100,7 +131,7 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       // 调用 Electron API
       const result = await window.electronAPI.ffmpeg.addWatermark(
         inputPath,
-        outputPath,
+        finalOutputPath,
         watermarkImagePath,
         coords.x,
         coords.y
@@ -134,7 +165,8 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     set({
       selectedFile: null,
       watermarkImage: null,
-      outputPath: null,
+      outputDir: null,
+      outputFileName: null,
       processedFile: null,
       isProcessing: false,
       progress: 0
