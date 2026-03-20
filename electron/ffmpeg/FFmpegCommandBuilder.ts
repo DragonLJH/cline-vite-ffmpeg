@@ -124,12 +124,17 @@ export class FFmpegCommandBuilder {
     return this
   }
 
-  // 水印
-  watermark(image: string, x = 10, y = 10) {
+  // 水印（支持时间控制）
+  watermark(image: string, x = 10, y = 10, start?: string, end?: string) {
 
     this.imageInput(image)
 
-    this.filters.push(`overlay=${x}:${y}`)
+    // 如果有时间参数，使用 enable 参数控制水印出现时间
+    if (start !== undefined && end !== undefined) {
+      this.filters.push(`overlay=enable='between(t,${start},${end})':x=${x}:y=${y}`)
+    } else {
+      this.filters.push(`overlay=${x}:${y}`)
+    }
 
     return this
   }
@@ -192,19 +197,6 @@ export class FFmpegCommandBuilder {
   // ========================
   // build
   // ========================
-  
-  /**
-   * 处理文件路径
-   * 在 Node.js spawn 中，不需要手动添加双引号，spawn 会自动处理参数
-   */
-  private quotePath(filePath: string): string {
-    // 移除可能存在的双引号，让 spawn 自动处理
-    if (filePath.startsWith('"') && filePath.endsWith('"')) {
-      return filePath.slice(1, -1)
-    }
-    
-    return filePath
-  }
 
   build(): string[] {
 
@@ -216,7 +208,7 @@ export class FFmpegCommandBuilder {
     // inputs
     this.inputs.forEach(input => {
       args.push(...input.options)
-      args.push("-i", this.quotePath(input.file))
+      args.push("-i", input.file)
     })
 
     // filter
@@ -241,9 +233,9 @@ export class FFmpegCommandBuilder {
 
     // outputs
     this.outputs.forEach(output => {
-      args.push(this.quotePath(output))
+      args.push(output)
     })
-
+    console.log('[build]', args.join(' '))
     return args
   }
 

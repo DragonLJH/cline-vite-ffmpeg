@@ -105,6 +105,8 @@ class FfmpegManager {
    * @param watermarkImage 水印图片路径
    * @param x 水印 X 坐标（默认 10）
    * @param y 水印 Y 坐标（默认 10）
+   * @param startTime 水印开始时间（秒）
+   * @param endTime 水印结束时间（秒）
    * @param pCallback 进度回调
    */
   async addWatermark(
@@ -113,6 +115,8 @@ class FfmpegManager {
     watermarkImage: string,
     x: number = 10,
     y: number = 10,
+    startTime?: string,
+    endTime?: string,
     pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
   ): Promise<TaskResult> {
     const taskId = `task_${Date.now()}`
@@ -123,7 +127,9 @@ class FfmpegManager {
       watermark: {
         image: watermarkImage,
         x,
-        y
+        y,
+        start: startTime,
+        end: endTime
       }
     }, (progress) => {
       pCallback?.({ taskId, progress })

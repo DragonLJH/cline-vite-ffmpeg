@@ -22,6 +22,10 @@ interface WatermarkConfig {
   position: string
   opacity: number
   size: number
+  startTime?: string  // 水印开始时间（秒）
+  endTime?: string    // 水印结束时间（秒）
+  x?: number  // 水印 X 坐标
+  y?: number  // 水印 Y 坐标
 }
 
 // 位置转换为坐标
@@ -113,8 +117,15 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       const inputPath = (selectedFile as any).path || selectedFile.name
       const watermarkImagePath = (watermarkImage as any).path || watermarkImage.name
       
-      // 获取坐标
-      const coords = getPositionCoords(config.position)
+      // 获取坐标 - 优先使用传入的坐标，否则使用位置转换的坐标
+      let x = config.x
+      let y = config.y
+      
+      if (x === undefined || y === undefined) {
+        const coords = getPositionCoords(config.position)
+        x = coords.x
+        y = coords.y
+      }
       
       // 拼接完整输出路径
       const separator = outputDir.endsWith('/') || outputDir.endsWith('\\') ? '' : '/'
@@ -124,17 +135,25 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
         input: inputPath,
         output: finalOutputPath,
         watermarkImage: watermarkImagePath,
-        x: coords.x,
-        y: coords.y
+        x: x,
+        y: y,
+        startTime: config.startTime,
+        endTime: config.endTime
       })
+      
+      // 打印FFmpeg命令（用于调试）
+      console.log('[WatermarkStore] FFmpeg command will be:', 
+        `ffmpeg -y -i "${inputPath}" -i "${watermarkImagePath}" -filter_complex "overlay=${x}:${y}${config.startTime && config.endTime ? `:enable='between(t,${config.startTime},${config.endTime})'` : ''}" "${finalOutputPath}"`)
 
       // 调用 Electron API
       const result = await window.electronAPI.ffmpeg.addWatermark(
         inputPath,
         finalOutputPath,
         watermarkImagePath,
-        coords.x,
-        coords.y
+        x,
+        y,
+        config.startTime,
+        config.endTime
       )
 
       console.log('[WatermarkStore] addWatermark result:', result)

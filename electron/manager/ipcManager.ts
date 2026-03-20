@@ -220,8 +220,9 @@ export class IPCHandlerManager {
 
     // 添加视频水印
     this.addChannel('ffmpeg:addWatermark', {
-      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarkImage: string, x?: number, y?: number) => {
-        return await ffmpegManager.addWatermark(input, output, watermarkImage, x, y, ({
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string) => {
+
+        return await ffmpegManager.addWatermark(input, output, watermarkImage, x, y, startTime, endTime, ({
           taskId,
           progress
         }: {
@@ -238,7 +239,7 @@ export class IPCHandlerManager {
     })
 
     // ========== 路径相关 ==========
-    
+
     // 获取默认输出文件路径
     this.addChannel('paths:getDefaultOutputPath', {
       handler: async (event: Electron.IpcMainInvokeEvent, prefix?: string, extension?: string) => {

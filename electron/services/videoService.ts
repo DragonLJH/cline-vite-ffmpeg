@@ -32,6 +32,8 @@ export interface TranscodeParams {
         image: string
         x?: number
         y?: number
+        start?: string  // 水印开始时间（秒）
+        end?: string    // 水印结束时间（秒）
     }
 
     cover?: string
@@ -79,10 +81,24 @@ export const videoService = {
 
         // watermark
         if (params.watermark) {
+            // 确保使用传入的坐标值，如果未定义则使用默认值
+            const watermarkX = params.watermark.x !== undefined ? params.watermark.x : 10
+            const watermarkY = params.watermark.y !== undefined ? params.watermark.y : 10
+            
+            console.log('[videoService] Applying watermark with coordinates:', {
+                image: params.watermark.image,
+                x: watermarkX,
+                y: watermarkY,
+                start: params.watermark.start,
+                end: params.watermark.end
+            })
+            
             builder.watermark(
                 params.watermark.image,
-                params.watermark.x ?? 10,
-                params.watermark.y ?? 10
+                watermarkX,
+                watermarkY,
+                params.watermark.start,
+                params.watermark.end
             )
         }
 
