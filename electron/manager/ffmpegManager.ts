@@ -107,6 +107,7 @@ class FfmpegManager {
    * @param y 水印 Y 坐标（默认 10）
    * @param startTime 水印开始时间（秒）
    * @param endTime 水印结束时间（秒）
+   * @param size 水印大小（百分比，1-100）
    * @param pCallback 进度回调
    */
   async addWatermark(
@@ -117,6 +118,7 @@ class FfmpegManager {
     y: number = 10,
     startTime?: string,
     endTime?: string,
+    size?: number,
     pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
   ): Promise<TaskResult> {
     const taskId = `task_${Date.now()}`
@@ -129,7 +131,8 @@ class FfmpegManager {
         x,
         y,
         start: startTime,
-        end: endTime
+        end: endTime,
+        size
       }
     }, (progress) => {
       pCallback?.({ taskId, progress })

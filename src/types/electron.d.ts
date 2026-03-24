@@ -57,7 +57,7 @@ interface ElectronAPI {
     cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => Promise<{ taskId: string; success: boolean; error?: string }>
     
     // 添加视频水印
-    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string) => Promise<{ taskId: string; success: boolean; error?: string }>
+    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => Promise<{ taskId: string; success: boolean; error?: string }>
     
     // 进度监听
     onProgress: (callback: (data: any) => void) => () => void

@@ -124,16 +124,27 @@ export class FFmpegCommandBuilder {
     return this
   }
 
-  // 水印（支持时间控制）
-  watermark(image: string, x = 10, y = 10, start?: string, end?: string) {
+  // 水印（支持时间控制和大小调整）
+  watermark(image: string, x = 10, y = 10, start?: string, end?: string, size?: number) {
 
     this.imageInput(image)
 
-    // 如果有时间参数，使用 enable 参数控制水印出现时间
-    if (start !== undefined && end !== undefined) {
-      this.filters.push(`overlay=enable='between(t,${start},${end})':x=${x}:y=${y}`)
+    // 如果有 size 参数，先用 scale 调整水印大小
+    if (size !== undefined && size !== 100) {
+      const scaleRatio = size / 100
+      // 如果有时间参数，使用 enable 参数控制水印出现时间
+      if (start !== undefined && end !== undefined) {
+        this.filters.push(`[1:v]scale=iw*${scaleRatio}:ih*${scaleRatio}[wm];[0:v][wm]overlay=enable='between(t,${start},${end})':x=${x}:y=${y}`)
+      } else {
+        this.filters.push(`[1:v]scale=iw*${scaleRatio}:ih*${scaleRatio}[wm];[0:v][wm]overlay=${x}:${y}`)
+      }
     } else {
-      this.filters.push(`overlay=${x}:${y}`)
+      // 如果有时间参数，使用 enable 参数控制水印出现时间
+      if (start !== undefined && end !== undefined) {
+        this.filters.push(`overlay=enable='between(t,${start},${end})':x=${x}:y=${y}`)
+      } else {
+        this.filters.push(`overlay=${x}:${y}`)
+      }
     }
 
     return this

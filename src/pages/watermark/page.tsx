@@ -34,9 +34,16 @@ const WatermarkPage: React.FC = () => {
   const [size, setSize] = useState(50)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [watermarkSize, setWatermarkSize] = useState(100)
   
   // 水印预览状态
-  const [watermarkPreviewPosition, setWatermarkPreviewPosition] = useState({ x: 10, y: 10 })
+  const [watermarkPreviewPosition, setWatermarkPreviewPosition] = useState({ 
+    displayX: 10, 
+    displayY: 10,
+    actualX: 10,
+    actualY: 10
+  })
+  const [videoResolution, setVideoResolution] = useState({ width: 0, height: 0 })
   
   // 坐标转位置字符串
   const coordsToPosition = (x: number, y: number): string => {
@@ -106,10 +113,15 @@ const WatermarkPage: React.FC = () => {
   }, [])
   
   // 当用户拖拽水印时，同步更新position状态
-  const handleWatermarkPreviewPositionChange = (newPosition: { x: number; y: number }) => {
+  const handleWatermarkPreviewPositionChange = (newPosition: { 
+    displayX: number
+    displayY: number
+    actualX: number
+    actualY: number
+  }) => {
     setWatermarkPreviewPosition(newPosition)
     // 同步更新position状态
-    const newPositionString = coordsToPosition(newPosition.x, newPosition.y)
+    const newPositionString = coordsToPosition(newPosition.displayX, newPosition.displayY)
     setPosition(newPositionString)
   }
   
@@ -118,7 +130,12 @@ const WatermarkPage: React.FC = () => {
     setPosition(newPosition)
     // 同步更新watermarkPreviewPosition状态
     const newCoords = positionToCoords(newPosition)
-    setWatermarkPreviewPosition(newCoords)
+    setWatermarkPreviewPosition({
+      displayX: newCoords.x,
+      displayY: newCoords.y,
+      actualX: newCoords.x,
+      actualY: newCoords.y
+    })
   }
 
   const handleProcessWatermark = async () => {
@@ -133,8 +150,9 @@ const WatermarkPage: React.FC = () => {
       size,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
-      x: watermarkPreviewPosition.x,
-      y: watermarkPreviewPosition.y
+      x: watermarkPreviewPosition.actualX,
+      y: watermarkPreviewPosition.actualY,
+      watermarkSize
     })
   }
 
@@ -179,6 +197,9 @@ const WatermarkPage: React.FC = () => {
                 size={size}
                 position={watermarkPreviewPosition}
                 onPositionChange={handleWatermarkPreviewPositionChange}
+                videoWidth={videoResolution.width}
+                videoHeight={videoResolution.height}
+                onVideoLoaded={(width, height) => setVideoResolution({ width, height })}
               />
             )}
           </div>
@@ -192,6 +213,7 @@ const WatermarkPage: React.FC = () => {
             size={size}
             startTime={startTime}
             endTime={endTime}
+            watermarkSize={watermarkSize}
             outputFileName={outputFileName || ''}
             isProcessing={isProcessing}
             progress={progress}
@@ -203,6 +225,7 @@ const WatermarkPage: React.FC = () => {
             onSizeChange={setSize}
             onStartTimeChange={setStartTime}
             onEndTimeChange={setEndTime}
+            onWatermarkSizeChange={setWatermarkSize}
             onOutputFileNameChange={setOutputFileName}
             onProcess={handleProcessWatermark}
             onReset={resetState}

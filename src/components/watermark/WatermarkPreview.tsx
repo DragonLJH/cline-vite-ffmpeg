@@ -5,8 +5,21 @@ interface WatermarkPreviewProps {
   watermarkImage: File | null
   opacity: number
   size: number
-  position: { x: number; y: number }
-  onPositionChange: (position: { x: number; y: number }) => void
+  position: { 
+    displayX: number      // 显示坐标（用于预览）
+    displayY: number
+    actualX: number       // 实际分辨率坐标（用于 FFmpeg）
+    actualY: number
+  }
+  onPositionChange: (position: { 
+    displayX: number
+    displayY: number
+    actualX: number
+    actualY: number
+  }) => void
+  videoWidth?: number
+  videoHeight?: number
+  onVideoLoaded?: (width: number, height: number) => void
 }
 
 const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
@@ -15,10 +28,14 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
   opacity,
   size,
   position,
-  onPositionChange
+  onPositionChange,
+  videoWidth,
+  videoHeight,
+  onVideoLoaded
 }) => {
   const [isDraggingWatermark, setIsDraggingWatermark] = useState(false)
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
+  const [watermarkImageError, setWatermarkImageError] = useState(false)
   
   // 使用useMemo缓存URL.createObjectURL的结果，避免频繁重新创建
   const videoUrl = useMemo(() => {
@@ -59,23 +76,31 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
       if (!videoElement) return
       
       const videoRect = videoElement.getBoundingClientRect()
-      const containerRect = videoContainer.getBoundingClientRect()
       
-      // 计算视频元素相对于容器的偏移
-      const videoOffsetX = videoRect.left - containerRect.left
-      const videoOffsetY = videoRect.top - containerRect.top
-      
-      // 计算鼠标相对于视频元素的位置
-      const x = e.clientX - videoRect.left
-      const y = e.clientY - videoRect.top
+      // 计算鼠标相对于视频元素的位置（显示尺寸）
+      const displayX = e.clientX - videoRect.left
+      const displayY = e.clientY - videoRect.top
       
       // 限制在视频元素范围内
       const maxX = videoRect.width
       const maxY = videoRect.height
       
+      // 获取视频实际分辨率
+      const actualVideoWidth = videoWidth || videoElement.videoWidth || videoRect.width
+      const actualVideoHeight = videoHeight || videoElement.videoHeight || videoRect.height
+      
+      // 将显示尺寸坐标换算成实际分辨率坐标
+      const scaleX = actualVideoWidth / videoRect.width
+      const scaleY = actualVideoHeight / videoRect.height
+      
+      const actualX = Math.max(0, Math.min(displayX, maxX)) * scaleX
+      const actualY = Math.max(0, Math.min(displayY, maxY)) * scaleY
+      
       onPositionChange({
-        x: Math.max(0, Math.min(x, maxX)),
-        y: Math.max(0, Math.min(y, maxY))
+        displayX: parseFloat(displayX.toFixed(2)),
+        displayY: parseFloat(displayY.toFixed(2)),
+        actualX: parseFloat(actualX.toFixed(2)),
+        actualY: parseFloat(actualY.toFixed(2))
       })
     }
     
@@ -92,7 +117,28 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDraggingWatermark, onPositionChange])
+  }, [isDraggingWatermark, onPositionChange, videoWidth, videoHeight])
+
+  // 计算显示坐标（将实际分辨率坐标换算回显示坐标）
+  const getDisplayPosition = () => {
+    const videoContainer = document.querySelector('.watermark-preview-container')
+    if (!videoContainer) return { x: position.displayX, y: position.displayY }
+    
+    const videoElement = videoContainer.querySelector('video') as HTMLVideoElement
+    if (!videoElement) return { x: position.displayX, y: position.displayY }
+    
+    const videoRect = videoElement.getBoundingClientRect()
+    
+    // 获取视频实际分辨率
+    const actualVideoWidth = videoWidth || videoElement.videoWidth || videoRect.width
+    const actualVideoHeight = videoHeight || videoElement.videoHeight || videoRect.height
+    
+    // 将实际分辨率坐标换算成显示坐标
+    const displayX = position.actualX * (videoRect.width / actualVideoWidth)
+    const displayY = position.actualY * (videoRect.height / actualVideoHeight)
+    
+    return { x: displayX, y: displayY }
+  }
 
   if (!videoFile || !watermarkImage) {
     return null
@@ -111,6 +157,10 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
             if (ref) {
               ref.onloadedmetadata = () => {
                 setVideoDimensions({ width: ref.videoWidth, height: ref.videoHeight })
+                // 调用回调通知父组件视频分辨率
+                if (onVideoLoaded) {
+                  onVideoLoaded(ref.videoWidth, ref.videoHeight)
+                }
               }
             }
           }}
@@ -126,28 +176,46 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
             opacity: opacity / 100,
           }}
         >
-          <img
-            src={watermarkImageUrl || ''}
-            alt="水印预览"
-            className="absolute cursor-move pointer-events-auto"
-            style={{
-              left: `${position.x}px`,
-              top: `${position.y}px`,
-              width: `${size}%`,
-              maxWidth: '200px',
-              transform: 'translate(-50%, -50%)'
-            }}
-            onMouseDown={(e) => {
-              e.preventDefault()
-              setIsDraggingWatermark(true)
-            }}
-          />
+          {watermarkImageUrl && !watermarkImageError ? (
+            <img
+              src={watermarkImageUrl}
+              alt="水印预览"
+              className="absolute cursor-move pointer-events-auto"
+              style={{
+                left: `${getDisplayPosition().x}px`,
+                top: `${getDisplayPosition().y}px`,
+                width: `${size}%`,
+                maxWidth: '200px'
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                setIsDraggingWatermark(true)
+              }}
+              onError={() => setWatermarkImageError(true)}
+            />
+          ) : (
+            <div 
+              className="absolute cursor-move pointer-events-auto bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-sm"
+              style={{
+                left: `${getDisplayPosition().x}px`,
+                top: `${getDisplayPosition().y}px`,
+                width: '100px',
+                height: '100px'
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                setIsDraggingWatermark(true)
+              }}
+            >
+              水印图片加载失败
+            </div>
+          )}
         </div>
         
         {/* 水印位置信息 */}
         <div className="mt-4 p-3 bg-[var(--bg-secondary)] rounded-lg">
           <p className="text-sm text-[var(--text-secondary)]">
-            水印位置: X={Math.round(position.x)}px, Y={Math.round(position.y)}px
+            水印位置: X={position.displayX.toFixed(2)}px, Y={position.displayY.toFixed(2)}px
           </p>
           <p className="text-xs text-[var(--text-secondary)] mt-1">
             拖拽水印图片调整位置

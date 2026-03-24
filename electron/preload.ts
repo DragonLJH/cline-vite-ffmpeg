@@ -130,8 +130,8 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.invoke("ffmpeg:cut", input, output, start, duration, precise),
     
     // 添加视频水印
-    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number) => 
-      ipcRenderer.invoke("ffmpeg:addWatermark", input, output, watermarkImage, x, y),
+    addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => 
+      ipcRenderer.invoke("ffmpeg:addWatermark", input, output, watermarkImage, x, y, startTime, endTime, size),
     
     // 进度监听
     onProgress: (callback: (data: any) => void) => {

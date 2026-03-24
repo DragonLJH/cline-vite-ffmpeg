@@ -34,6 +34,7 @@ export interface TranscodeParams {
         y?: number
         start?: string  // 水印开始时间（秒）
         end?: string    // 水印结束时间（秒）
+        size?: number   // 水印大小（百分比，1-100）
     }
 
     cover?: string
@@ -90,7 +91,8 @@ export const videoService = {
                 x: watermarkX,
                 y: watermarkY,
                 start: params.watermark.start,
-                end: params.watermark.end
+                end: params.watermark.end,
+                size: params.watermark.size
             })
             
             builder.watermark(
@@ -98,7 +100,8 @@ export const videoService = {
                 watermarkX,
                 watermarkY,
                 params.watermark.start,
-                params.watermark.end
+                params.watermark.end,
+                params.watermark.size
             )
         }
 

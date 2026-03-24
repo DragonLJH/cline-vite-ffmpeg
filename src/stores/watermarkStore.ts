@@ -26,21 +26,22 @@ interface WatermarkConfig {
   endTime?: string    // 水印结束时间（秒）
   x?: number  // 水印 X 坐标
   y?: number  // 水印 Y 坐标
+  watermarkSize?: number  // 水印图片大小（百分比，1-100）
 }
 
-// 位置转换为坐标
+// 位置转换为坐标（使用相对位置，实际坐标由前端计算）
 const getPositionCoords = (position: string): { x: number; y: number } => {
   switch (position) {
     case 'topLeft':
       return { x: 10, y: 10 }
     case 'topRight':
-      return { x: 1900, y: 10 }  // 默认假设视频宽度 2000，水印宽度 100
+      return { x: 10, y: 10 }  // 前端会根据视频宽度计算实际位置
     case 'bottomLeft':
-      return { x: 10, y: 1070 }  // 默认假设视频高度 1080，水印高度 10
+      return { x: 10, y: 10 }  // 前端会根据视频高度计算实际位置
     case 'bottomRight':
-      return { x: 1900, y: 1070 }
+      return { x: 10, y: 10 }  // 前端会根据视频宽高计算实际位置
     case 'center':
-      return { x: 950, y: 535 }  // 中心位置
+      return { x: 10, y: 10 }  // 前端会根据视频宽高计算中心位置
     default:
       return { x: 10, y: 10 }
   }
@@ -138,12 +139,13 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
         x: x,
         y: y,
         startTime: config.startTime,
-        endTime: config.endTime
+        endTime: config.endTime,
+        size: config.watermarkSize
       })
       
       // 打印FFmpeg命令（用于调试）
       console.log('[WatermarkStore] FFmpeg command will be:', 
-        `ffmpeg -y -i "${inputPath}" -i "${watermarkImagePath}" -filter_complex "overlay=${x}:${y}${config.startTime && config.endTime ? `:enable='between(t,${config.startTime},${config.endTime})'` : ''}" "${finalOutputPath}"`)
+        `ffmpeg -y -i "${inputPath}" -i "${watermarkImagePath}" -filter_complex "${config.watermarkSize && config.watermarkSize !== 100 ? `[1:v]scale=iw*${config.watermarkSize/100}:ih*${config.watermarkSize/100}[wm];[0:v][wm]` : 'overlay='}${x}:${y}${config.startTime && config.endTime ? `:enable='between(t,${config.startTime},${config.endTime})'` : ''}" "${finalOutputPath}"`)
 
       // 调用 Electron API
       const result = await window.electronAPI.ffmpeg.addWatermark(
@@ -153,7 +155,8 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
         x,
         y,
         config.startTime,
-        config.endTime
+        config.endTime,
+        config.watermarkSize
       )
 
       console.log('[WatermarkStore] addWatermark result:', result)

@@ -220,9 +220,9 @@ export class IPCHandlerManager {
 
     // 添加视频水印
     this.addChannel('ffmpeg:addWatermark', {
-      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string) => {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => {
 
-        return await ffmpegManager.addWatermark(input, output, watermarkImage, x, y, startTime, endTime, ({
+        return await ffmpegManager.addWatermark(input, output, watermarkImage, x, y, startTime, endTime, size, ({
           taskId,
           progress
         }: {

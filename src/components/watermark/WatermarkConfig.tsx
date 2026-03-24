@@ -10,6 +10,7 @@ interface WatermarkConfigProps {
   size: number
   startTime: string
   endTime: string
+  watermarkSize: number
   outputFileName: string
   isProcessing: boolean
   progress: number
@@ -21,6 +22,7 @@ interface WatermarkConfigProps {
   onSizeChange: (size: number) => void
   onStartTimeChange: (time: string) => void
   onEndTimeChange: (time: string) => void
+  onWatermarkSizeChange: (size: number) => void
   onOutputFileNameChange: (name: string) => void
   onProcess: () => void
   onReset: () => void
@@ -34,6 +36,7 @@ const WatermarkConfig: React.FC<WatermarkConfigProps> = ({
   size,
   startTime,
   endTime,
+  watermarkSize,
   outputFileName,
   isProcessing,
   progress,
@@ -45,6 +48,7 @@ const WatermarkConfig: React.FC<WatermarkConfigProps> = ({
   onSizeChange,
   onStartTimeChange,
   onEndTimeChange,
+  onWatermarkSizeChange,
   onOutputFileNameChange,
   onProcess,
   onReset
@@ -220,6 +224,26 @@ const WatermarkConfig: React.FC<WatermarkConfigProps> = ({
           <p className="text-xs text-[var(--text-secondary)]">
             💡 时间设置说明：留空表示从视频开始到结束。设置时间后，水印只会在指定时间段内显示。
           </p>
+        </div>
+
+        {/* 水印图片大小 */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+            📐 水印图片大小
+          </label>
+          <input
+            type="range"
+            min="10"
+            max="200"
+            value={watermarkSize}
+            onChange={(e) => onWatermarkSizeChange(Number(e.target.value))}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-[var(--text-secondary)]">
+            <span>10%</span>
+            <span>{watermarkSize}%</span>
+            <span>200%</span>
+          </div>
         </div>
 
         {/* 处理按钮 */}
