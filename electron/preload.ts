@@ -66,6 +66,7 @@ interface ElectronAPI {
     screenshotAccurate: (input: string, time: string, output: string) => void
     cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => void
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number) => void
+    getMediaInfo: (input: string) => Promise<any>
     onProgress: (callback: (data: any) => void) => void
   }
 
@@ -132,6 +133,9 @@ const electronAPI: ElectronAPI = {
     // 添加视频水印
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => 
       ipcRenderer.invoke("ffmpeg:addWatermark", input, output, watermarkImage, x, y, startTime, endTime, size),
+    
+    // 获取媒体信息
+    getMediaInfo: (input: string) => ipcRenderer.invoke("ffmpeg:getMediaInfo", input),
     
     // 进度监听
     onProgress: (callback: (data: any) => void) => {

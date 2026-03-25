@@ -2,6 +2,31 @@ import { FFmpegCommandBuilder } from "../ffmpeg/FFmpegCommandBuilder"
 import { FFmpegExecutor } from "../ffmpeg/FFmpegExecutor"
 import { FFmpegProgress } from "../ffmpeg/progressParser"
 
+// 媒体信息接口定义
+export interface StreamInfo {
+    index: number
+    type: 'video' | 'audio' | 'subtitle' | 'other'
+    codec: string
+    codec_long?: string
+    width?: number
+    height?: number
+    fps?: number
+    bitrate?: string
+    sample_rate?: string
+    channels?: number
+    channel_layout?: string
+    duration?: string
+    language?: string
+}
+
+export interface MediaInfo {
+    format: string
+    duration: string
+    size: string
+    bitrate: string
+    streams: StreamInfo[]
+}
+
 const executor = new FFmpegExecutor()
 
 export interface TranscodeParams {
@@ -195,6 +220,141 @@ export const videoService = {
 
         return executor.run(builder.build())
 
+    },
+
+    // ========================
+    // 获取媒体信息
+    // ========================
+    async getMediaInfo(input: string): Promise<MediaInfo> {
+        // 使用 FFmpegCommandBuilder 构建命令
+        // 添加 -f null - 来获取信息而不需要实际输出文件
+        const builder = new FFmpegCommandBuilder()
+            .input(input)
+            .custom("-f", "null", "-")
+        
+        const task = executor.run(builder.build())
+        
+        // 等待任务完成
+        const result = await task.result
+        
+        // ffmpeg -i 输出到 stderr
+        const output = result.stderr
+        
+        // 解析输出
+        return this.parseMediaInfo(output)
+    },
+
+    // 解析 ffmpeg -i 输出
+    parseMediaInfo(output: string): MediaInfo {
+        const info: MediaInfo = {
+            format: '',
+            duration: '',
+            size: '',
+            bitrate: '',
+            streams: []
+        }
+
+        const lines = output.split('\n')
+        let currentStream: StreamInfo | null = null
+
+        for (const line of lines) {
+            // 解析格式
+            const formatMatch = line.match(/Input #0, ([^,]+),/)
+            if (formatMatch) {
+                info.format = formatMatch[1]
+            }
+
+            // 解析时长
+            const durationMatch = line.match(/Duration: ([^,]+)/)
+            if (durationMatch) {
+                info.duration = durationMatch[1]
+            }
+
+            // 解析大小
+            const sizeMatch = line.match(/size: ([^,]+)/)
+            if (sizeMatch) {
+                info.size = sizeMatch[1]
+            }
+
+            // 解析比特率
+            const bitrateMatch = line.match(/bitrate: ([^,]+)/)
+            if (bitrateMatch) {
+                info.bitrate = bitrateMatch[1]
+            }
+
+            // 解析流信息
+            const streamMatch = line.match(/Stream #0:(\d+)(?:\(([^)]*)\))?: (Video|Audio|Subtitle): (.+)/i)
+            if (streamMatch) {
+                const [, index, lang, type, details] = streamMatch
+                
+                currentStream = {
+                    index: parseInt(index),
+                    type: type.toLowerCase() as 'video' | 'audio' | 'subtitle',
+                    codec: '',
+                    language: lang || undefined
+                }
+
+                // 解析详细信息
+                const parts = details.split(', ')
+                if (parts.length > 0) {
+                    currentStream.codec = parts[0]
+                }
+
+                // 解析分辨率（视频）
+                if (type === 'Video') {
+                    const resMatch = details.match(/(\d{3,5})x(\d{3,5})/)
+                    if (resMatch) {
+                        currentStream.width = parseInt(resMatch[1])
+                        currentStream.height = parseInt(resMatch[2])
+                    }
+                    
+                    // 解析帧率
+                    const fpsMatch = details.match(/(\d+(?:\.\d+)?) fps/)
+                    if (fpsMatch) {
+                        currentStream.fps = parseFloat(fpsMatch[1])
+                    }
+                }
+
+                // 解析采样率（音频）
+                if (type === 'Audio') {
+                    const sampleRateMatch = details.match(/(\d+) Hz/)
+                    if (sampleRateMatch) {
+                        currentStream.sample_rate = sampleRateMatch[1]
+                    }
+                    
+                    // 解析声道
+                    const channelsMatch = details.match(/(mono|stereo|(\d+) channels)/)
+                    if (channelsMatch) {
+                        if (channelsMatch[1] === 'mono') {
+                            currentStream.channels = 1
+                            currentStream.channel_layout = 'mono'
+                        } else if (channelsMatch[1] === 'stereo') {
+                            currentStream.channels = 2
+                            currentStream.channel_layout = 'stereo'
+                        } else if (channelsMatch[2]) {
+                            currentStream.channels = parseInt(channelsMatch[2])
+                            currentStream.channel_layout = `${channelsMatch[2]} channels`
+                        }
+                    }
+                }
+
+                // 解析比特率
+                const streamBitrateMatch = details.match(/(\d+) kb\/s/)
+                if (streamBitrateMatch) {
+                    currentStream.bitrate = `${streamBitrateMatch[1]} kb/s`
+                }
+
+                info.streams.push(currentStream)
+            }
+
+            // 解析流时长
+            const streamDurationMatch = line.match(/Duration: ([^,]+)/)
+            if (streamDurationMatch && currentStream) {
+                currentStream.duration = streamDurationMatch[1]
+            }
+        }
+
+        return info
     }
 
 }

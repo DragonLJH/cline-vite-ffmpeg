@@ -12,7 +12,8 @@ const WatermarkPage: React.FC = () => {
   const { t } = useTranslation()
   const {
     selectedFile,
-    watermarkImage,
+    watermarks,
+    videoInfo,
     outputDir,
     outputFileName,
     processedFile,
@@ -20,21 +21,18 @@ const WatermarkPage: React.FC = () => {
     progress,
     initStore,
     setSelectedFile,
-    setWatermarkImage,
+    addWatermark,
+    removeWatermark,
     setOutputDir,
     setOutputFileName,
-    addWatermark,
+    processWatermarks,
     resetState
   } = useWatermarkStore()
   
-  // 水印配置状态
-  const [watermarkText, setWatermarkText] = useState('')
-  const [position, setPosition] = useState('topLeft')
+  // 水印配置状态（用于预览）
+  const [watermarkImage, setWatermarkImage] = useState<File | null>(null)
   const [opacity, setOpacity] = useState(50)
   const [size, setSize] = useState(50)
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [watermarkSize, setWatermarkSize] = useState(100)
   
   // 水印预览状态
   const [watermarkPreviewPosition, setWatermarkPreviewPosition] = useState({ 
@@ -45,53 +43,6 @@ const WatermarkPage: React.FC = () => {
   })
   const [videoResolution, setVideoResolution] = useState({ width: 0, height: 0 })
   
-  // 坐标转位置字符串
-  const coordsToPosition = (x: number, y: number): string => {
-    // 获取视频元素以计算实际尺寸
-    const videoElement = document.querySelector('.watermark-preview-container video') as HTMLVideoElement
-    if (!videoElement) return 'custom'
-    
-    const videoWidth = videoElement.videoWidth || videoElement.clientWidth
-    const videoHeight = videoElement.videoHeight || videoElement.clientHeight
-    
-    // 计算相对位置（百分比）
-    const xPercent = (x / videoWidth) * 100
-    const yPercent = (y / videoHeight) * 100
-    
-    // 判断位置
-    if (xPercent < 20 && yPercent < 20) return 'topLeft'
-    if (xPercent > 80 && yPercent < 20) return 'topRight'
-    if (xPercent < 20 && yPercent > 80) return 'bottomLeft'
-    if (xPercent > 80 && yPercent > 80) return 'bottomRight'
-    if (xPercent > 40 && xPercent < 60 && yPercent > 40 && yPercent < 60) return 'center'
-    
-    return 'custom'
-  }
-  
-  // 位置字符串转坐标
-  const positionToCoords = (pos: string): { x: number; y: number } => {
-    const videoElement = document.querySelector('.watermark-preview-container video') as HTMLVideoElement
-    if (!videoElement) return { x: 10, y: 10 }
-    
-    const videoWidth = videoElement.videoWidth || videoElement.clientWidth
-    const videoHeight = videoElement.videoHeight || videoElement.clientHeight
-    
-    switch (pos) {
-      case 'topLeft':
-        return { x: 10, y: 10 }
-      case 'topRight':
-        return { x: videoWidth - 10, y: 10 }
-      case 'bottomLeft':
-        return { x: 10, y: videoHeight - 10 }
-      case 'bottomRight':
-        return { x: videoWidth - 10, y: videoHeight - 10 }
-      case 'center':
-        return { x: videoWidth / 2, y: videoHeight / 2 }
-      default:
-        return { x: 10, y: 10 }
-    }
-  }
-
   const handleSelectOutputDir = async () => {
     try {
       const result = await window.electronAPI.openFileDialog({
@@ -112,7 +63,7 @@ const WatermarkPage: React.FC = () => {
     initStore()
   }, [])
   
-  // 当用户拖拽水印时，同步更新position状态
+  // 当用户拖拽水印时，同步更新预览位置
   const handleWatermarkPreviewPositionChange = (newPosition: { 
     displayX: number
     displayY: number
@@ -120,40 +71,26 @@ const WatermarkPage: React.FC = () => {
     actualY: number
   }) => {
     setWatermarkPreviewPosition(newPosition)
-    // 同步更新position状态
-    const newPositionString = coordsToPosition(newPosition.displayX, newPosition.displayY)
-    setPosition(newPositionString)
-  }
-  
-  // 当用户在配置区选择位置时，同步更新watermarkPreviewPosition状态
-  const handlePositionChange = (newPosition: string) => {
-    setPosition(newPosition)
-    // 同步更新watermarkPreviewPosition状态
-    const newCoords = positionToCoords(newPosition)
-    setWatermarkPreviewPosition({
-      displayX: newCoords.x,
-      displayY: newCoords.y,
-      actualX: newCoords.x,
-      actualY: newCoords.y
-    })
   }
 
-  const handleProcessWatermark = async () => {
-    if (!selectedFile || !watermarkImage || !outputDir || !outputFileName) {
-      return
-    }
-
-    await addWatermark({
-      text: watermarkText,
-      position,
+  // 添加水印到列表
+  const handleAddWatermark = () => {
+    if (!watermarkImage) return
+    
+    addWatermark({
+      image: watermarkImage,
+      position: { x: watermarkPreviewPosition.actualX, y: watermarkPreviewPosition.actualY },
       opacity,
       size,
-      startTime: startTime || undefined,
-      endTime: endTime || undefined,
-      x: watermarkPreviewPosition.actualX,
-      y: watermarkPreviewPosition.actualY,
-      watermarkSize
+      startTime: 0,
+      endTime: videoInfo?.duration || 0
     })
+    
+    // 重置预览状态
+    setWatermarkImage(null)
+    setOpacity(50)
+    setSize(50)
+    setWatermarkPreviewPosition({ displayX: 10, displayY: 10, actualX: 10, actualY: 10 })
   }
 
   const handleDownload = () => {
@@ -206,28 +143,21 @@ const WatermarkPage: React.FC = () => {
 
           {/* 右侧：水印配置区域 */}
           <WatermarkConfig
-            watermarkImage={watermarkImage}
-            watermarkText={watermarkText}
-            position={position}
-            opacity={opacity}
-            size={size}
-            startTime={startTime}
-            endTime={endTime}
-            watermarkSize={watermarkSize}
+            watermarks={watermarks}
+            videoDuration={videoInfo?.duration || 0}
+            videoFile={selectedFile}
             outputFileName={outputFileName || ''}
             isProcessing={isProcessing}
             progress={progress}
-            canProcess={!!selectedFile && !!watermarkImage && !!outputDir && !!outputFileName}
-            onWatermarkImageSelect={setWatermarkImage}
-            onWatermarkTextChange={setWatermarkText}
-            onPositionChange={handlePositionChange}
-            onOpacityChange={setOpacity}
-            onSizeChange={setSize}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onWatermarkSizeChange={setWatermarkSize}
+            canProcess={!!selectedFile && watermarks.length > 0 && !!outputDir && !!outputFileName}
+            onAddWatermark={addWatermark}
+            onRemoveWatermark={removeWatermark}
+            onUpdateWatermark={(id, updates) => {
+              // 更新水印逻辑
+              console.log('Update watermark:', id, updates)
+            }}
             onOutputFileNameChange={setOutputFileName}
-            onProcess={handleProcessWatermark}
+            onProcess={processWatermarks}
             onReset={resetState}
           />
         </div>

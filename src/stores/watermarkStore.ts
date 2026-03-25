@@ -1,8 +1,29 @@
 import { create } from 'zustand'
 
+// 水印项接口
+interface WatermarkItem {
+  id: string                    // 唯一标识
+  image: File | null            // 水印图片
+  position: { x: number; y: number }  // 位置坐标
+  opacity: number               // 透明度 (0-100)
+  size: number                  // 大小百分比 (10-200)
+  startTime: number             // 开始时间（秒）
+  endTime: number               // 结束时间（秒）
+}
+
+// 视频信息接口
+interface VideoInfo {
+  duration: number              // 视频时长（秒）
+  width: number                 // 视频宽度
+  height: number                // 视频高度
+  fps: number                   // 帧率
+  bitrate: string               // 比特率
+}
+
 interface WatermarkState {
   selectedFile: File | null
-  watermarkImage: File | null  // 水印图片
+  watermarks: WatermarkItem[]   // 多水印数组
+  videoInfo: VideoInfo | null   // 视频信息
   outputDir: string | null     // 输出目录
   outputFileName: string | null // 输出文件名
   processedFile: File | null
@@ -10,46 +31,25 @@ interface WatermarkState {
   progress: number
   initStore: () => Promise<void>
   setSelectedFile: (file: File | null) => void
-  setWatermarkImage: (file: File | null) => void
+  setVideoInfo: (info: VideoInfo | null) => void
+  addWatermark: (watermark: Omit<WatermarkItem, 'id'>) => void
+  updateWatermark: (id: string, updates: Partial<WatermarkItem>) => void
+  removeWatermark: (id: string) => void
   setOutputDir: (dir: string) => void
   setOutputFileName: (name: string) => void
-  addWatermark: (config: WatermarkConfig) => Promise<void>
+  processWatermarks: () => Promise<void>
   resetState: () => void
 }
 
-interface WatermarkConfig {
-  text: string
-  position: string
-  opacity: number
-  size: number
-  startTime?: string  // 水印开始时间（秒）
-  endTime?: string    // 水印结束时间（秒）
-  x?: number  // 水印 X 坐标
-  y?: number  // 水印 Y 坐标
-  watermarkSize?: number  // 水印图片大小（百分比，1-100）
-}
-
-// 位置转换为坐标（使用相对位置，实际坐标由前端计算）
-const getPositionCoords = (position: string): { x: number; y: number } => {
-  switch (position) {
-    case 'topLeft':
-      return { x: 10, y: 10 }
-    case 'topRight':
-      return { x: 10, y: 10 }  // 前端会根据视频宽度计算实际位置
-    case 'bottomLeft':
-      return { x: 10, y: 10 }  // 前端会根据视频高度计算实际位置
-    case 'bottomRight':
-      return { x: 10, y: 10 }  // 前端会根据视频宽高计算实际位置
-    case 'center':
-      return { x: 10, y: 10 }  // 前端会根据视频宽高计算中心位置
-    default:
-      return { x: 10, y: 10 }
-  }
+// 生成唯一 ID
+const generateId = (): string => {
+  return `watermark_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
 export const useWatermarkStore = create<WatermarkState>((set, get) => ({
   selectedFile: null,
-  watermarkImage: null,
+  watermarks: [],
+  videoInfo: null,
   outputDir: null,
   outputFileName: null,
   processedFile: null,
@@ -76,13 +76,54 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       const defaultFileName = `watermarked_${file.name}`
       console.log('[WatermarkStore] Setting default filename:', defaultFileName)
       set({ outputFileName: defaultFileName })
+      
+      // 读取视频信息
+      const filePath = (file as any).path || file.name
+      window.electronAPI.ffmpeg.getMediaInfo(filePath).then((info) => {
+        console.log('[WatermarkStore] Video info loaded:', info)
+        set({
+          videoInfo: {
+            duration: parseFloat(info.duration) || 0,
+            width: info.streams?.[0]?.width || 0,
+            height: info.streams?.[0]?.height || 0,
+            fps: info.streams?.[0]?.fps || 0,
+            bitrate: info.bitrate || '0'
+          }
+        })
+      }).catch((error) => {
+        console.error('[WatermarkStore] Failed to get video info:', error)
+      })
     }
     console.log('[WatermarkStore] selectedFile updated:', get().selectedFile?.name)
   },
 
-  setWatermarkImage: (file: File | null) => {
-    console.log('[WatermarkStore] setWatermarkImage called with:', file?.name)
-    set({ watermarkImage: file })
+  setVideoInfo: (info: VideoInfo | null) => {
+    console.log('[WatermarkStore] setVideoInfo called with:', info)
+    set({ videoInfo: info })
+  },
+
+  addWatermark: (watermark: Omit<WatermarkItem, 'id'>) => {
+    const id = generateId()
+    console.log('[WatermarkStore] addWatermark called with:', watermark)
+    set((state) => ({
+      watermarks: [...state.watermarks, { ...watermark, id }]
+    }))
+  },
+
+  updateWatermark: (id: string, updates: Partial<WatermarkItem>) => {
+    console.log('[WatermarkStore] updateWatermark called with:', id, updates)
+    set((state) => ({
+      watermarks: state.watermarks.map((w) =>
+        w.id === id ? { ...w, ...updates } : w
+      )
+    }))
+  },
+
+  removeWatermark: (id: string) => {
+    console.log('[WatermarkStore] removeWatermark called with:', id)
+    set((state) => ({
+      watermarks: state.watermarks.filter((w) => w.id !== id)
+    }))
   },
 
   setOutputDir: (dir: string) => {
@@ -95,10 +136,10 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     set({ outputFileName: name })
   },
 
-  addWatermark: async (config: WatermarkConfig) => {
-    const { selectedFile, watermarkImage, outputDir, outputFileName } = get()
+  processWatermarks: async () => {
+    const { selectedFile, watermarks, outputDir, outputFileName } = get()
     
-    if (!selectedFile || !watermarkImage || !outputDir || !outputFileName) {
+    if (!selectedFile || watermarks.length === 0 || !outputDir || !outputFileName) {
       console.error('[WatermarkStore] Missing required files or output path')
       return
     }
@@ -116,64 +157,68 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     try {
       // 获取输入文件路径
       const inputPath = (selectedFile as any).path || selectedFile.name
-      const watermarkImagePath = (watermarkImage as any).path || watermarkImage.name
-      
-      // 获取坐标 - 优先使用传入的坐标，否则使用位置转换的坐标
-      let x = config.x
-      let y = config.y
-      
-      if (x === undefined || y === undefined) {
-        const coords = getPositionCoords(config.position)
-        x = coords.x
-        y = coords.y
-      }
       
       // 拼接完整输出路径
       const separator = outputDir.endsWith('/') || outputDir.endsWith('\\') ? '' : '/'
       const finalOutputPath = `${outputDir}${separator}${outputFileName}`
       
-      console.log('[WatermarkStore] Calling addWatermark with:', {
-        input: inputPath,
-        output: finalOutputPath,
-        watermarkImage: watermarkImagePath,
-        x: x,
-        y: y,
-        startTime: config.startTime,
-        endTime: config.endTime,
-        size: config.watermarkSize
-      })
+      // 处理多个水印
+      let currentInput = inputPath
       
-      // 打印FFmpeg命令（用于调试）
-      console.log('[WatermarkStore] FFmpeg command will be:', 
-        `ffmpeg -y -i "${inputPath}" -i "${watermarkImagePath}" -filter_complex "${config.watermarkSize && config.watermarkSize !== 100 ? `[1:v]scale=iw*${config.watermarkSize/100}:ih*${config.watermarkSize/100}[wm];[0:v][wm]` : 'overlay='}${x}:${y}${config.startTime && config.endTime ? `:enable='between(t,${config.startTime},${config.endTime})'` : ''}" "${finalOutputPath}"`)
-
-      // 调用 Electron API
-      const result = await window.electronAPI.ffmpeg.addWatermark(
-        inputPath,
-        finalOutputPath,
-        watermarkImagePath,
-        x,
-        y,
-        config.startTime,
-        config.endTime,
-        config.watermarkSize
-      )
-
-      console.log('[WatermarkStore] addWatermark result:', result)
-      
-      if (result.success) {
-        // 处理成功，创建处理后的文件对象
-        const processedBlob = new Blob([], { type: 'video/mp4' })
-        const processedFile = new File([processedBlob], `watermarked_${selectedFile.name}`)
+      for (let i = 0; i < watermarks.length; i++) {
+        const watermark = watermarks[i]
+        const watermarkImagePath = (watermark.image as any).path || watermark.image?.name
         
-        set({ 
-          processedFile: processedFile,
-          isProcessing: false,
-          progress: 100
+        if (!watermarkImagePath) continue
+        
+        const isLast = i === watermarks.length - 1
+        const outputPath = isLast ? finalOutputPath : `${outputDir}/temp_watermark_${i}.mp4`
+        
+        console.log('[WatermarkStore] Processing watermark:', {
+          index: i,
+          input: currentInput,
+          output: outputPath,
+          watermarkImage: watermarkImagePath,
+          x: watermark.position.x,
+          y: watermark.position.y,
+          startTime: watermark.startTime,
+          endTime: watermark.endTime,
+          size: watermark.size
         })
-      } else {
-        throw new Error(result.error || 'Watermark processing failed')
+        
+        // 调用 Electron API
+        const result = await window.electronAPI.ffmpeg.addWatermark(
+          currentInput,
+          outputPath,
+          watermarkImagePath,
+          watermark.position.x,
+          watermark.position.y,
+          watermark.startTime.toString(),
+          watermark.endTime.toString(),
+          watermark.size
+        )
+        
+        if (!result.success) {
+          throw new Error(result.error || `Watermark ${i} processing failed`)
+        }
+        
+        // 如果不是最后一个水印，使用临时文件作为下一个水印的输入
+        if (!isLast) {
+          currentInput = outputPath
+        }
       }
+      
+      console.log('[WatermarkStore] All watermarks processed successfully')
+      
+      // 处理成功，创建处理后的文件对象
+      const processedBlob = new Blob([], { type: 'video/mp4' })
+      const processedFile = new File([processedBlob], outputFileName)
+      
+      set({ 
+        processedFile: processedFile,
+        isProcessing: false,
+        progress: 100
+      })
     } catch (error) {
       console.error('[WatermarkStore] Watermark processing failed:', error)
       set({ isProcessing: false, progress: 0 })
@@ -186,7 +231,8 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
   resetState: () => {
     set({
       selectedFile: null,
-      watermarkImage: null,
+      watermarks: [],
+      videoInfo: null,
       outputDir: null,
       outputFileName: null,
       processedFile: null,

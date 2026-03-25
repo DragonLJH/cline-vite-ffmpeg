@@ -1,5 +1,5 @@
 
-import { videoService, TranscodeParams } from "../services/videoService"
+import { videoService, TranscodeParams, MediaInfo } from "../services/videoService"
 import { FFmpegProgress } from "../ffmpeg/progressParser"
 
 // 统一返回类型
@@ -144,6 +144,15 @@ class FfmpegManager {
     } catch (err: any) {
       return { taskId, success: false, error: err.message }
     }
+  }
+
+  /**
+   * 获取媒体信息
+   * @param input 输入文件路径
+   * @returns 媒体信息
+   */
+  async getMediaInfo(input: string): Promise<MediaInfo> {
+    return await videoService.getMediaInfo(input)
   }
 }
 

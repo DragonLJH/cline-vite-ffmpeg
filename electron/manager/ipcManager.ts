@@ -3,6 +3,7 @@ import { BROADCAST_CHANNELS, handleBroadcast, registerBroadcastHandlers } from '
 import { createBrowserWindow } from './windowManager'
 import { ffmpegManager } from './ffmpegManager'
 import { FFmpegProgress } from "../ffmpeg/progressParser"
+import { MediaInfo } from "../services/videoService"
 import { getAppPaths, getDefaultOutputPath, generateOutputFilename } from '../config'
 
 /**
@@ -234,6 +235,14 @@ export class IPCHandlerManager {
             progress
           })
         })
+      },
+      type: 'handle'
+    })
+
+    // 获取媒体信息
+    this.addChannel('ffmpeg:getMediaInfo', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string): Promise<MediaInfo> => {
+        return await ffmpegManager.getMediaInfo(input)
       },
       type: 'handle'
     })

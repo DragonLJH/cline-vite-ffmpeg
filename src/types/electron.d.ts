@@ -1,4 +1,6 @@
 // Electron preload API 类型定义
+import { MediaInfo } from '../../electron/services/videoService'
+
 type ThemeType = 'light' | 'dark'
 
 interface ElectronAPI {
@@ -58,6 +60,9 @@ interface ElectronAPI {
     
     // 添加视频水印
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => Promise<{ taskId: string; success: boolean; error?: string }>
+    
+    // 获取媒体信息
+    getMediaInfo: (input: string) => Promise<MediaInfo>
     
     // 进度监听
     onProgress: (callback: (data: any) => void) => () => void

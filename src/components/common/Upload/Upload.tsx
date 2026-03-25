@@ -68,12 +68,12 @@ const getFileExtension = (fileName: string, mimeType?: string): string => {
   if (nameParts.length > 1) {
     return nameParts.pop()?.toLowerCase() || ''
   }
-  
+
   // 从 MIME 类型获取扩展名
   if (mimeType && MIME_TO_EXTENSION[mimeType]) {
     return MIME_TO_EXTENSION[mimeType]
   }
-  
+
   return ''
 }
 
@@ -88,7 +88,7 @@ const getFileTypeConfig = (extension: string, mimeType?: string): { category: Fi
       return FILE_TYPE_CONFIG[mimePrefix]
     }
   }
-  
+
   // 检查扩展名
   if (extension) {
     // 图片扩展名
@@ -128,7 +128,7 @@ const getFileTypeConfig = (extension: string, mimeType?: string): { category: Fi
       return FILE_TYPE_CONFIG[extension] || FILE_TYPE_CONFIG['zip']
     }
   }
-  
+
   return FILE_TYPE_CONFIG['default']
 }
 
@@ -216,13 +216,13 @@ const Upload: React.FC<UploadProps> = ({
     if (maxSize && file.size > maxSize) {
       return `文件 "${file.name}" 超过最大限制 ${formatFileSize(maxSize)}`
     }
-    
+
     // 检查文件类型
     if (accept) {
       const acceptedTypes = accept.split(',').map(t => t.trim().toLowerCase())
       const fileExtension = getFileExtension(file.name, file.type)
       const mimeType = file.type.toLowerCase()
-      
+
       const isAccepted = acceptedTypes.some(type => {
         // 检查通配符，如 image/*
         if (type.endsWith('/*')) {
@@ -236,12 +236,12 @@ const Upload: React.FC<UploadProps> = ({
         // 检查完整 MIME 类型
         return mimeType === type
       })
-      
+
       if (!isAccepted) {
         return `文件 "${file.name}" 类型不支持`
       }
     }
-    
+
     return null
   }, [accept, maxSize])
 
@@ -250,35 +250,35 @@ const Upload: React.FC<UploadProps> = ({
    */
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles || newFiles.length === 0) return
-    
+
     const validFiles: FileItem[] = []
     let errorMessage: string | null = null
-    
+
     Array.from(newFiles).forEach(file => {
       const error = validateFile(file)
       if (error) {
         errorMessage = error
         return
       }
-      
+
       const extension = getFileExtension(file.name, file.type)
       const config = getFileTypeConfig(extension, file.type)
       const previewUrl = isMediaFile(config.category) ? URL.createObjectURL(file) : undefined
-      
+
       validFiles.push({
         file,
         category: config.category,
         previewUrl
       })
     })
-    
+
     if (errorMessage && onError) {
       onError(errorMessage)
     }
-    
+
     if (validFiles.length > 0) {
       const updatedFiles = multiple ? [...files, ...validFiles] : validFiles
-      
+
       // 清理旧的预览 URL
       if (!multiple) {
         files.forEach(item => {
@@ -287,15 +287,15 @@ const Upload: React.FC<UploadProps> = ({
           }
         })
       }
-      
+
       setFiles(updatedFiles)
-      
+
       // Debug log
       console.log('[Upload] Files selected:', validFiles.map(f => f.file.name))
       console.log('[Upload] Calling onChange with:', multiple ? updatedFiles.map(f => f.file) : updatedFiles[0].file)
-      
+
       onChange?.(multiple ? updatedFiles.map(f => f.file) : updatedFiles[0].file)
-      
+
       // 兼容旧 API：调用 onFileSelect
       if (onFileSelect) {
         console.log('[Upload] Calling onFileSelect with:', validFiles.map(f => f.file))
@@ -341,9 +341,9 @@ const Upload: React.FC<UploadProps> = ({
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-    
+
     if (disabled) return
-    
+
     handleFiles(e.dataTransfer.files)
   }, [disabled, handleFiles])
 
@@ -353,12 +353,12 @@ const Upload: React.FC<UploadProps> = ({
   const handleRemove = useCallback((index: number) => {
     const newFiles = [...files]
     const removedItem = newFiles.splice(index, 1)[0]
-    
+
     // 清理预览 URL
     if (removedItem.previewUrl) {
       URL.revokeObjectURL(removedItem.previewUrl)
     }
-    
+
     setFiles(newFiles)
     onChange?.(multiple ? newFiles.map(f => f.file) : null)
   }, [files, multiple, onChange])
@@ -379,9 +379,9 @@ const Upload: React.FC<UploadProps> = ({
     if (!showPreview || !isMediaFile(item.category)) {
       return null
     }
-    
+
     const { file, previewUrl, category } = item
-    
+
     if (category === 'image' && previewUrl) {
       return (
         <img
@@ -391,7 +391,7 @@ const Upload: React.FC<UploadProps> = ({
         />
       )
     }
-    
+
     if (category === 'audio' && previewUrl) {
       return (
         <div className="w-full h-full flex items-center justify-center bg-gray-800">
@@ -404,7 +404,7 @@ const Upload: React.FC<UploadProps> = ({
         </div>
       )
     }
-    
+
     if (category === 'video' && previewUrl) {
       return (
         <video
@@ -417,7 +417,7 @@ const Upload: React.FC<UploadProps> = ({
         />
       )
     }
-    
+
     return null
   }, [showPreview])
 
@@ -428,7 +428,7 @@ const Upload: React.FC<UploadProps> = ({
     const extension = getFileExtension(item.file.name, item.file.type)
     const config = getFileTypeConfig(extension, item.file.type)
     const hasPreview = showPreview && isMediaFile(item.category) && item.previewUrl
-    
+
     return (
       <div
         key={`${item.file.name}-${item.file.size}-${index}`}
@@ -446,7 +446,7 @@ const Upload: React.FC<UploadProps> = ({
         `}>
           {hasPreview ? renderPreview(item) : <span>{config.icon}</span>}
         </div>
-        
+
         {/* 文件信息 */}
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-[var(--text-primary)] truncate">
@@ -460,7 +460,7 @@ const Upload: React.FC<UploadProps> = ({
             {item.file.webkitRelativePath || item.file.name}
           </div>
         </div>
-        
+
         {/* 删除按钮 */}
         <button
           type="button"
@@ -501,7 +501,7 @@ const Upload: React.FC<UploadProps> = ({
           {label}
         </label>
       )}
-      
+
       {/* 上传区域 */}
       <div
         onClick={handleClick}
@@ -512,8 +512,8 @@ const Upload: React.FC<UploadProps> = ({
         className={`
           relative border-2 border-dashed rounded-lg p-6
           transition-all cursor-pointer
-          ${disabled 
-            ? 'border-[var(--border-primary)] opacity-50 cursor-not-allowed' 
+          ${disabled
+            ? 'border-[var(--border-primary)] opacity-50 cursor-not-allowed'
             : isDragging
               ? 'border-blue-500 bg-blue-50/10'
               : 'border-[var(--border-primary)] hover:border-blue-500 hover:bg-blue-50/5'
@@ -530,7 +530,7 @@ const Upload: React.FC<UploadProps> = ({
           className="hidden"
           {...props}
         />
-        
+
         <div className="flex flex-col items-center gap-2 text-center">
           {/* 上传图标 */}
           <div className={`
@@ -551,7 +551,7 @@ const Upload: React.FC<UploadProps> = ({
               />
             </svg>
           </div>
-          
+
           {/* 提示文字 */}
           <div>
             <p className="text-sm text-[var(--text-primary)]">
@@ -565,7 +565,7 @@ const Upload: React.FC<UploadProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* 文件列表 */}
       {files.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
