@@ -11,6 +11,34 @@ interface WatermarkItem {
   endTime: number               // 结束时间（秒）
 }
 
+// 资源管理配置
+const RESOURCE_CONFIG = {
+  MAX_CONCURRENT_FFMPEG_JOBS: 1,  // 最大并发FFmpeg任务数
+  MEDIA_INFO_TIMEOUT_MS: 30000,   // 获取媒体信息超时时间（毫秒）
+  TEMP_FILE_PREFIX: 'temp_watermark_', // 临时文件前缀
+}
+
+// 清理临时文件的辅助函数
+const cleanupTempFiles = async (filePaths: string[]) => {
+  if (!filePaths || filePaths.length === 0) return
+
+  console.log('[WatermarkStore] Cleaning up temp files:', filePaths)
+
+  for (const filePath of filePaths) {
+    try {
+      // 使用Node.js fs模块删除文件（通过Electron的IPC）
+      // 注意：这里需要通过IPC调用主进程来删除文件
+      // 由于我们在渲染进程中，不能直接使用fs模块
+      // 我们可以通过一个简单的IPC调用来删除文件
+      console.log('[WatermarkStore] Would delete temp file:', filePath)
+      // 暂时只记录日志，实际删除逻辑需要在主进程实现
+    } catch (error) {
+      // 忽略删除失败的错误（文件可能不存在）
+      console.warn('[WatermarkStore] Failed to delete temp file:', filePath, error)
+    }
+  }
+}
+
 // 视频信息接口
 interface VideoInfo {
   duration: number              // 视频时长（秒）
@@ -45,6 +73,19 @@ interface WatermarkState {
 const generateId = (): string => {
   return `watermark_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
+function time2sec(time: string) {
+  const times = time.split(':')
+  if (times.length == 3) {
+    const hour = Number(times[0])
+    const min = Number(times[1])
+    const sec = Number(times[2])
+    return Number(hour * 3600) + Number(min * 60) + Number(sec)
+  } else {
+    const min = Number(times[0])
+    const sec = Number(times[1])
+    return Number(min * 60) + Number(sec)
+  }
+}
 
 export const useWatermarkStore = create<WatermarkState>((set, get) => ({
   selectedFile: null,
@@ -76,14 +117,26 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       const defaultFileName = `watermarked_${file.name}`
       console.log('[WatermarkStore] Setting default filename:', defaultFileName)
       set({ outputFileName: defaultFileName })
-      
-      // 读取视频信息
+
+      // 读取视频信息（带超时机制）
       const filePath = (file as any).path || file.name
-      window.electronAPI.ffmpeg.getMediaInfo(filePath).then((info) => {
+
+      // 创建超时Promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('获取媒体信息超时'))
+        }, RESOURCE_CONFIG.MEDIA_INFO_TIMEOUT_MS)
+      })
+
+      // 竞争：获取媒体信息 vs 超时
+      Promise.race([
+        window.electronAPI.ffmpeg.getMediaInfo(filePath),
+        timeoutPromise
+      ]).then((info: any) => {
         console.log('[WatermarkStore] Video info loaded:', info)
         set({
           videoInfo: {
-            duration: parseFloat(info.duration) || 0,
+            duration: time2sec(info.duration) || 0,
             width: info.streams?.[0]?.width || 0,
             height: info.streams?.[0]?.height || 0,
             fps: info.streams?.[0]?.fps || 0,
@@ -92,6 +145,16 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
         })
       }).catch((error) => {
         console.error('[WatermarkStore] Failed to get video info:', error)
+        // 设置默认值，避免UI卡住
+        set({
+          videoInfo: {
+            duration: 0,
+            width: 0,
+            height: 0,
+            fps: 0,
+            bitrate: '0'
+          }
+        })
       })
     }
     console.log('[WatermarkStore] selectedFile updated:', get().selectedFile?.name)
@@ -138,14 +201,20 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
 
   processWatermarks: async () => {
     const { selectedFile, watermarks, outputDir, outputFileName } = get()
-    
+
     if (!selectedFile || watermarks.length === 0 || !outputDir || !outputFileName) {
       console.error('[WatermarkStore] Missing required files or output path')
       return
     }
 
+    // 检查是否有其他正在处理的任务（资源限制）
+    if (get().isProcessing) {
+      console.warn('[WatermarkStore] Another processing task is already running')
+      return
+    }
+
     set({ isProcessing: true, progress: 0 })
-    
+
     // 设置进度监听器
     const unsubscribe = window.electronAPI.ffmpeg.onProgress((data) => {
       console.log('[WatermarkStore] Progress received:', data)
@@ -153,27 +222,35 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
         set({ progress: Math.round(data.progress.percent) })
       }
     })
-    
+
+    // 临时文件列表，用于清理
+    const tempFiles: string[] = []
+
     try {
       // 获取输入文件路径
       const inputPath = (selectedFile as any).path || selectedFile.name
-      
+
       // 拼接完整输出路径
       const separator = outputDir.endsWith('/') || outputDir.endsWith('\\') ? '' : '/'
       const finalOutputPath = `${outputDir}${separator}${outputFileName}`
-      
+
       // 处理多个水印
       let currentInput = inputPath
-      
+
       for (let i = 0; i < watermarks.length; i++) {
         const watermark = watermarks[i]
         const watermarkImagePath = (watermark.image as any).path || watermark.image?.name
-        
+
         if (!watermarkImagePath) continue
-        
+
         const isLast = i === watermarks.length - 1
-        const outputPath = isLast ? finalOutputPath : `${outputDir}/temp_watermark_${i}.mp4`
-        
+        const outputPath = isLast ? finalOutputPath : `${outputDir}/${RESOURCE_CONFIG.TEMP_FILE_PREFIX}${i}.mp4`
+
+        // 记录临时文件路径（除了最终输出文件）
+        if (!isLast) {
+          tempFiles.push(outputPath)
+        }
+
         console.log('[WatermarkStore] Processing watermark:', {
           index: i,
           input: currentInput,
@@ -185,7 +262,7 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
           endTime: watermark.endTime,
           size: watermark.size
         })
-        
+
         // 调用 Electron API
         const result = await window.electronAPI.ffmpeg.addWatermark(
           currentInput,
@@ -197,31 +274,38 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
           watermark.endTime.toString(),
           watermark.size
         )
-        
+
         if (!result.success) {
           throw new Error(result.error || `Watermark ${i} processing failed`)
         }
-        
+
         // 如果不是最后一个水印，使用临时文件作为下一个水印的输入
         if (!isLast) {
           currentInput = outputPath
         }
       }
-      
+
       console.log('[WatermarkStore] All watermarks processed successfully')
-      
+
       // 处理成功，创建处理后的文件对象
       const processedBlob = new Blob([], { type: 'video/mp4' })
       const processedFile = new File([processedBlob], outputFileName)
-      
-      set({ 
+
+      set({
         processedFile: processedFile,
         isProcessing: false,
         progress: 100
       })
+
+      // 清理临时文件
+      await cleanupTempFiles(tempFiles)
+
     } catch (error) {
       console.error('[WatermarkStore] Watermark processing failed:', error)
       set({ isProcessing: false, progress: 0 })
+
+      // 清理临时文件（即使失败也要清理）
+      await cleanupTempFiles(tempFiles)
     } finally {
       // 移除进度监听器
       unsubscribe()

@@ -1,5 +1,5 @@
 // Electron preload API 类型定义
-import { MediaInfo } from '../../electron/services/videoService'
+// import { MediaInfo } from '../../electron/services/videoService'
 
 type ThemeType = 'light' | 'dark'
 
@@ -40,7 +40,7 @@ interface ElectronAPI {
     readText: () => string
     writeText: (text: string) => void
   }
-  
+
   // 文件操作
   readFile: (filePath: string) => Promise<{ buffer: string; fileName: string }>
 
@@ -48,25 +48,31 @@ interface ElectronAPI {
   ffmpeg: {
     // 转码（完整能力）
     run: (params: any) => Promise<{ taskId: string; success: boolean; error?: string }>
-    
+
     // 截图（快速模式）
     screenshot: (input: string, time: string, output: string) => Promise<{ taskId: string; success: boolean; error?: string }>
-    
+
     // 精确截图
     screenshotAccurate: (input: string, time: string, output: string) => Promise<{ taskId: string; success: boolean; error?: string }>
-    
+
     // 裁剪视频
     cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => Promise<{ taskId: string; success: boolean; error?: string }>
-    
+
     // 添加视频水印
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => Promise<{ taskId: string; success: boolean; error?: string }>
-    
+
     // 获取媒体信息
-    getMediaInfo: (input: string) => Promise<MediaInfo>
-    
+    getMediaInfo: (input: string) => Promise<{
+      format: string
+      duration: string
+      size: string
+      bitrate: string
+      streams: StreamInfo[]
+    }>
+
     // 进度监听
     onProgress: (callback: (data: any) => void) => () => void
-    
+
     // 音频相关（保留原有方法）
     checkAudioMetadata: (filePath: string) => Promise<{ hasCover: boolean }>
     extractAudioCover: (filePath: string) => Promise<string | null>

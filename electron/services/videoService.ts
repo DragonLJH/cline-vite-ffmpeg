@@ -228,11 +228,16 @@ export const videoService = {
     async getMediaInfo(input: string): Promise<MediaInfo> {
         // 使用 FFmpegCommandBuilder 构建命令
         // 添加 -f null - 来获取信息而不需要实际输出文件
+        // 添加 -hide_banner 减少输出信息
+        // 添加 -analyzeduration 和 -probesize 限制分析时间
         const builder = new FFmpegCommandBuilder()
             .input(input)
-            .custom("-f", "null", "-")
+            .custom("-hide_banner", "-f", "null", "-", "-analyzeduration", "5000000", "-probesize", "5000000")
         
-        const task = executor.run(builder.build())
+        // 设置 15 秒超时，防止某些视频导致进程卡住
+        const task = executor.run(builder.build(), {
+            timeout: 15000
+        })
         
         // 等待任务完成
         const result = await task.result

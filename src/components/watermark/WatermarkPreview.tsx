@@ -108,11 +108,13 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
       setIsDraggingWatermark(false)
     }
     
+    // 添加事件监听器
     if (isDraggingWatermark) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     }
     
+    // 清理事件监听器
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)

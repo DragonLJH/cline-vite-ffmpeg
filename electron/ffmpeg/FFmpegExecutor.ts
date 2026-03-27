@@ -5,6 +5,7 @@ import { parseProgress, timeToSeconds, FFmpegProgress } from "./progressParser"
 
 export interface ExecutorOptions {
   duration?: number
+  timeout?: number  // 超时时间（毫秒），超时后自动终止进程
   onProgress?: (p: FFmpegProgress) => void
   onLog?: (log: string) => void
 }
@@ -26,6 +27,7 @@ export interface FFmpegTask {
 export class FFmpegExecutor {
 
   private ffmpegPath: string
+  private currentPid?: number
 
   constructor() {
     this.ffmpegPath = this.getFFmpegPath()
@@ -122,10 +124,44 @@ export class FFmpegExecutor {
 
   run(args: string[], options: ExecutorOptions = {}): FFmpegTask {
     const proc = spawn(this.ffmpegPath, args)
+    
+    // 记录进程ID
+    if (proc.pid) {
+      this.currentPid = proc.pid
+      console.log(`[FFmpegExecutor] FFmpeg process started with PID: ${proc.pid}`)
+    }
 
     let stdout = ""
     let stderr = ""
     let hasError = false
+    let timeoutId: NodeJS.Timeout | null = null
+
+    // 设置超时机制
+    if (options.timeout && options.timeout > 0) {
+      timeoutId = setTimeout(() => {
+        console.warn(`[FFmpegExecutor] Process timeout after ${options.timeout}ms, terminating...`)
+        this.currentPid = undefined
+        
+        // 强制终止进程
+        if (proc.pid) {
+          const isWindows = process.platform === "win32"
+          const killCommand = isWindows ? "taskkill" : "kill"
+          const killArgs = isWindows 
+            ? ["/PID", proc.pid.toString(), "/F"]
+            : ["-9", proc.pid.toString()]
+          
+          const killProc = spawn(killCommand, killArgs)
+          killProc.on("close", () => {
+            proc.kill("SIGTERM")
+          })
+          killProc.on("error", () => {
+            proc.kill("SIGTERM")
+          })
+        } else {
+          proc.kill("SIGTERM")
+        }
+      }, options.timeout)
+    }
 
     const result = new Promise<FFmpegResult>((resolve, reject) => {
 
@@ -157,6 +193,15 @@ export class FFmpegExecutor {
       })
 
       proc.on("close", (code, signal) => {
+        // 清除超时定时器
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+        
+        // 清除进程ID记录
+        this.currentPid = undefined
+        
         // 输出结束信息
         console.log(`[FFmpegExecutor] Process closed with code: ${code}, signal: ${signal}`)
         
@@ -191,6 +236,12 @@ export class FFmpegExecutor {
       })
 
       proc.on("error", (err) => {
+        // 清除超时定时器
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+        
         hasError = true
         console.error(`[FFmpegExecutor] Process error: ${err.message}`)
         
@@ -213,8 +264,40 @@ export class FFmpegExecutor {
     return {
       process: proc,
       cancel: () => {
-        console.log(`[FFmpegExecutor] Cancelling FFmpeg process`)
-        proc.kill("SIGTERM")
+        console.log(`[FFmpegExecutor] Cancelling FFmpeg process (PID: ${this.currentPid})`)
+        
+        if (!this.currentPid) {
+          console.warn(`[FFmpegExecutor] No process ID recorded, falling back to proc.kill()`)
+          proc.kill("SIGTERM")
+          return
+        }
+
+        // 根据平台选择适当的kill命令
+        const isWindows = process.platform === "win32"
+        const killCommand = isWindows ? "taskkill" : "kill"
+        const killArgs = isWindows 
+          ? ["/PID", this.currentPid.toString(), "/F"]
+          : ["-9", this.currentPid.toString()]
+
+        console.log(`[FFmpegExecutor] Executing: ${killCommand} ${killArgs.join(" ")}`)
+
+        const killProc = spawn(killCommand, killArgs)
+        
+        killProc.on("close", (code) => {
+          if (code === 0) {
+            console.log(`[FFmpegExecutor] Successfully terminated process ${this.currentPid}`)
+          } else {
+            console.warn(`[FFmpegExecutor] kill command exited with code ${code}, falling back to proc.kill()`)
+            proc.kill("SIGTERM")
+          }
+          this.currentPid = undefined
+        })
+
+        killProc.on("error", (err) => {
+          console.error(`[FFmpegExecutor] kill command error: ${err.message}, falling back to proc.kill()`)
+          proc.kill("SIGTERM")
+          this.currentPid = undefined
+        })
       },
       result
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from '../../hooks/useTranslation'
 import Upload from '@/components/common/Upload'
 import TimeRangeSlider from '../common/TimeRangeSlider'
@@ -63,8 +63,32 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
     onUpdate(watermark.id, { startTime, endTime })
   }
 
-  // 生成水印图片URL
-  const watermarkImageUrl = watermark.image ? URL.createObjectURL(watermark.image) : null
+  // 使用useMemo缓存URL，避免频繁重新创建
+  const watermarkImageUrl = useMemo(() => {
+    if (watermark.image) {
+      return URL.createObjectURL(watermark.image)
+    }
+    return null
+  }, [watermark.image])
+
+  const videoUrl = useMemo(() => {
+    if (videoFile) {
+      return URL.createObjectURL(videoFile)
+    }
+    return null
+  }, [videoFile])
+
+  // 清理URL，避免内存泄漏
+  useEffect(() => {
+    return () => {
+      if (watermarkImageUrl) {
+        URL.revokeObjectURL(watermarkImageUrl)
+      }
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl)
+      }
+    }
+  }, [watermarkImageUrl, videoUrl])
 
   return (
     <div className="p-4 bg-[var(--bg-secondary)] rounded-xl">
@@ -93,7 +117,7 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
         <div className="mb-4 relative">
           <div className="relative bg-gray-800 rounded-lg overflow-hidden" style={{ height: '200px' }}>
             <video
-              src={URL.createObjectURL(videoFile)}
+              src={videoUrl || ''}
               className="w-full h-full object-contain"
               muted
             />

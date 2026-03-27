@@ -10,6 +10,7 @@ interface VideoUploadProps {
 const VideoUpload: React.FC<VideoUploadProps> = ({ selectedFile, onFileSelect }) => {
   const { t } = useTranslation()
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
+  const videoRef = useRef<HTMLVideoElement>(null)
   
   // 使用useMemo缓存URL.createObjectURL的结果，避免频繁重新创建
   const videoUrl = useMemo(() => {
@@ -27,6 +28,17 @@ const VideoUpload: React.FC<VideoUploadProps> = ({ selectedFile, onFileSelect })
       }
     }
   }, [videoUrl])
+  
+  // 组件卸载时清理视频元素
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.src = ''
+        videoRef.current.load()
+      }
+    }
+  }, [])
 
   const handleFileSelect = (files: File[]) => {
     if (files.length > 0) {
