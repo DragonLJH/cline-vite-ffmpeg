@@ -8,6 +8,11 @@ export interface ExecutorOptions {
   timeout?: number  // 超时时间（毫秒），超时后自动终止进程
   onProgress?: (p: FFmpegProgress) => void
   onLog?: (log: string) => void
+  
+  // 新增资源控制选项
+  maxThreads?: number       // 最大线程数（默认：CPU核心数/2）
+  priority?: 'low' | 'normal' | 'high'  // 进程优先级
+  memoryLimit?: string      // 内存限制（如 "512M"）
 }
 
 export interface FFmpegResult {
@@ -49,6 +54,49 @@ export class FFmpegExecutor {
     console.log(`[FFmpegExecutor] FFmpeg path: ${ffmpegPath}`)
 
     return ffmpegPath
+  }
+
+  /**
+   * 应用资源限制到FFmpeg参数
+   */
+  private applyResourceLimits(args: string[], options: ExecutorOptions): string[] {
+    const finalArgs = [...args]
+    
+    // 如果指定了maxThreads且args中没有-threads参数，添加线程限制
+    if (options.maxThreads && !finalArgs.includes('-threads')) {
+      finalArgs.push('-threads', String(options.maxThreads))
+    }
+    
+    // 如果指定了memoryLimit，添加内存限制参数
+    if (options.memoryLimit && !finalArgs.includes('-max_muxing_queue_size')) {
+      finalArgs.push('-max_muxing_queue_size', '1024')
+    }
+    
+    return finalArgs
+  }
+
+  /**
+   * 获取Windows优先级类
+   */
+  private getWindowsPriorityClass(priority: 'low' | 'normal' | 'high'): string {
+    const priorityMap = {
+      low: 'BELOWNORMAL',
+      normal: 'NORMAL',
+      high: 'ABOVENORMAL'
+    }
+    return priorityMap[priority]
+  }
+
+  /**
+   * 获取Unix nice值
+   */
+  private getUnixNiceValue(priority: 'low' | 'normal' | 'high'): number {
+    const niceMap = {
+      low: 10,    // 较低优先级
+      normal: 0,  // 普通优先级
+      high: -10   // 较高优先级（需要root权限）
+    }
+    return niceMap[priority]
   }
 
   /**
@@ -123,12 +171,34 @@ export class FFmpegExecutor {
   }
 
   run(args: string[], options: ExecutorOptions = {}): FFmpegTask {
-    const proc = spawn(this.ffmpegPath, args)
+    // 应用资源限制
+    const finalArgs = this.applyResourceLimits(args, options)
+    
+    // 根据平台和优先级选择执行方式
+    let proc: ChildProcessWithoutNullStreams
+    
+    if (options.priority && process.platform === 'win32') {
+      // Windows系统使用start命令设置优先级
+      const priorityClass = this.getWindowsPriorityClass(options.priority)
+      proc = spawn('cmd', ['/c', 'start', priorityClass, '/B', this.ffmpegPath, ...finalArgs])
+    } else if (options.priority && process.platform !== 'win32') {
+      // Unix系统使用nice命令设置优先级
+      const niceValue = this.getUnixNiceValue(options.priority)
+      proc = spawn('nice', ['-n', String(niceValue), this.ffmpegPath, ...finalArgs])
+    } else {
+      // 默认执行方式
+      proc = spawn(this.ffmpegPath, finalArgs)
+    }
     
     // 记录进程ID
     if (proc.pid) {
       this.currentPid = proc.pid
       console.log(`[FFmpegExecutor] FFmpeg process started with PID: ${proc.pid}`)
+      console.log(`[FFmpegExecutor] Applied resource limits:`, {
+        maxThreads: options.maxThreads ?? 'auto',
+        priority: options.priority ?? 'normal',
+        memoryLimit: options.memoryLimit ?? 'none'
+      })
     }
 
     let stdout = ""

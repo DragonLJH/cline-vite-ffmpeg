@@ -239,6 +239,32 @@ export class IPCHandlerManager {
       type: 'handle'
     })
 
+    // 添加多个视频水印（一次性处理）
+    this.addChannel('ffmpeg:addWatermarks', {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarks: Array<{
+        image: string
+        x?: number
+        y?: number
+        start?: string
+        end?: string
+        size?: number
+      }>) => {
+        return await ffmpegManager.addWatermarks(input, output, watermarks, ({
+          taskId,
+          progress
+        }: {
+          taskId: string
+          progress: FFmpegProgress
+        }) => {
+          event.sender.send("ffmpeg:progress", {
+            taskId,
+            progress
+          })
+        })
+      },
+      type: 'handle'
+    })
+
     // 获取媒体信息
     this.addChannel('ffmpeg:getMediaInfo', {
       handler: async (event: Electron.IpcMainInvokeEvent, input: string): Promise<MediaInfo> => {

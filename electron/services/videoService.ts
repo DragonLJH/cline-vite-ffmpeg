@@ -70,6 +70,14 @@ export interface TranscodeParams {
         artist?: string
         album?: string
     }
+    
+    // 新增性能选项
+    performance?: {
+        maxThreads?: number     // 最大线程数
+        preset?: string         // 编码预设（ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow）
+        priority?: 'low' | 'normal' | 'high'  // 进程优先级
+        memoryLimit?: string    // 内存限制（如 "512M"）
+    }
 }
 
 function applySeek(builder: FFmpegCommandBuilder, p: TranscodeParams) {
@@ -155,11 +163,41 @@ export const videoService = {
             builder.id3(params.id3)
         }
 
+        // 应用性能优化选项
+        if (params.performance) {
+            // 如果指定了maxThreads，添加线程限制
+            if (params.performance.maxThreads) {
+                builder.threads(params.performance.maxThreads)
+            }
+            
+            // 如果指定了preset，添加编码预设
+            if (params.performance.preset) {
+                builder.preset(params.performance.preset)
+            }
+            
+            // 添加性能优化参数
+            builder.performanceOptions()
+        }
+
         builder.output(params.output)
 
-        return executor.run(builder.build(), {
-            onProgress
-        })
+        // 构建executor选项
+        const executorOptions: any = { onProgress }
+        
+        // 应用性能选项到executor
+        if (params.performance) {
+            if (params.performance.maxThreads) {
+                executorOptions.maxThreads = params.performance.maxThreads
+            }
+            if (params.performance.priority) {
+                executorOptions.priority = params.performance.priority
+            }
+            if (params.performance.memoryLimit) {
+                executorOptions.memoryLimit = params.performance.memoryLimit
+            }
+        }
+
+        return executor.run(builder.build(), executorOptions)
 
     },
 
@@ -220,6 +258,67 @@ export const videoService = {
 
         return executor.run(builder.build())
 
+    },
+
+    // ========================
+    // 多水印处理（一次性处理所有水印）
+    // ========================
+    addWatermarks(
+        params: {
+            input: string
+            output: string
+            watermarks: Array<{
+                image: string
+                x?: number
+                y?: number
+                start?: string
+                end?: string
+                size?: number
+            }>
+            performance?: {
+                maxThreads?: number
+                preset?: string
+                priority?: 'low' | 'normal' | 'high'
+                memoryLimit?: string
+            }
+        },
+        onProgress?: (p: FFmpegProgress) => void
+    ) {
+        const builder = new FFmpegCommandBuilder()
+            .overwrite()
+            .input(params.input)
+            .watermarks(params.watermarks)
+
+        // 应用性能优化选项
+        if (params.performance) {
+            if (params.performance.maxThreads) {
+                builder.threads(params.performance.maxThreads)
+            }
+            if (params.performance.preset) {
+                builder.preset(params.performance.preset)
+            }
+            builder.performanceOptions()
+        }
+
+        builder.output(params.output)
+
+        // 构建executor选项
+        const executorOptions: any = { onProgress }
+
+        // 应用性能选项到executor
+        if (params.performance) {
+            if (params.performance.maxThreads) {
+                executorOptions.maxThreads = params.performance.maxThreads
+            }
+            if (params.performance.priority) {
+                executorOptions.priority = params.performance.priority
+            }
+            if (params.performance.memoryLimit) {
+                executorOptions.memoryLimit = params.performance.memoryLimit
+            }
+        }
+
+        return executor.run(builder.build(), executorOptions)
     },
 
     // ========================

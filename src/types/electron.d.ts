@@ -61,6 +61,16 @@ interface ElectronAPI {
     // 添加视频水印
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => Promise<{ taskId: string; success: boolean; error?: string }>
 
+    // 添加多个视频水印（一次性处理）
+    addWatermarks: (input: string, output: string, watermarks: Array<{
+      image: string
+      x?: number
+      y?: number
+      start?: string
+      end?: string
+      size?: number
+    }>) => Promise<{ taskId: string; success: boolean; error?: string }>
+
     // 获取媒体信息
     getMediaInfo: (input: string) => Promise<{
       format: string

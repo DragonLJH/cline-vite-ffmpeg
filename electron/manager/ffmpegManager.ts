@@ -9,19 +9,34 @@ interface TaskResult {
   error?: string
 }
 
+// 性能配置接口
+export interface PerformanceConfig {
+  maxThreads?: number     // 最大线程数
+  preset?: string         // 编码预设
+  priority?: 'low' | 'normal' | 'high'  // 进程优先级
+  memoryLimit?: string    // 内存限制
+}
+
 class FfmpegManager {
   /**
    * 转码（完整能力）
    * @param params 转码参数
    * @param pCallback 进度回调
+   * @param performanceConfig 性能配置（可选）
    */
   async run(
     params: TranscodeParams,
-    pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
+    pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void,
+    performanceConfig?: PerformanceConfig
   ): Promise<TaskResult> {
     const taskId = `task_${Date.now()}`
 
-    const task = videoService.transcode(params, (progress) => {
+    // 如果提供了性能配置，将其合并到params中
+    const finalParams = performanceConfig 
+      ? { ...params, performance: performanceConfig }
+      : params
+
+    const task = videoService.transcode(finalParams, (progress) => {
       pCallback?.({ taskId, progress })
     })
 
@@ -134,6 +149,44 @@ class FfmpegManager {
         end: endTime,
         size
       }
+    }, (progress) => {
+      pCallback?.({ taskId, progress })
+    })
+
+    try {
+      await task.result
+      return { taskId, success: true }
+    } catch (err: any) {
+      return { taskId, success: false, error: err.message }
+    }
+  }
+
+  /**
+   * 添加多个视频水印（一次性处理）
+   * @param input 输入文件路径
+   * @param output 输出文件路径
+   * @param watermarks 水印数组
+   * @param pCallback 进度回调
+   */
+  async addWatermarks(
+    input: string,
+    output: string,
+    watermarks: Array<{
+      image: string
+      x?: number
+      y?: number
+      start?: string
+      end?: string
+      size?: number
+    }>,
+    pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
+  ): Promise<TaskResult> {
+    const taskId = `task_${Date.now()}`
+
+    const task = videoService.addWatermarks({
+      input,
+      output,
+      watermarks
     }, (progress) => {
       pCallback?.({ taskId, progress })
     })
