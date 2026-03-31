@@ -46,12 +46,6 @@ const VideoUpload: React.FC<VideoUploadProps> = ({ selectedFile, onFileSelect })
     }
   }
 
-  const handleFileChange = (file: File | File[] | null) => {
-    if (file && !Array.isArray(file)) {
-      onFileSelect(file)
-    }
-  }
-
   return (
     <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
       <h2 className="text-3xl font-bold mb-6 text-[var(--text-primary)]">
@@ -68,7 +62,6 @@ const VideoUpload: React.FC<VideoUploadProps> = ({ selectedFile, onFileSelect })
           buttonText={t('pages_watermark_upload_selectButton')}
           showFileList={false}
           onFileSelect={handleFileSelect}
-          onChange={handleFileChange}
           className="upload-video-area"
         />
       ) : (
