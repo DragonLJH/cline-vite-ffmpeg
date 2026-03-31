@@ -127,7 +127,6 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
           reject(new Error('获取媒体信息超时'))
         }, RESOURCE_CONFIG.MEDIA_INFO_TIMEOUT_MS)
       })
-      debugger
       // 竞争：获取媒体信息 vs 超时
       Promise.race([
         window.electronAPI.ffmpeg.getMediaInfo(filePath),

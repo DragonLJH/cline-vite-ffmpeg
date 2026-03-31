@@ -37,6 +37,9 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
   const [localSize, setLocalSize] = useState(watermark.size)
   const [localStartTime, setLocalStartTime] = useState(watermark.startTime)
   const [localEndTime, setLocalEndTime] = useState(watermark.endTime)
+  const [watermarkImageUrl, setWatermarkImageUrl] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoResolution, setVideoResolution] = useState({ width: 0, height: 0 })
 
   // 处理位置拖拽更新
   const handlePositionChange = (newPosition: { x: number; y: number }) => {
@@ -63,32 +66,31 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
     onUpdate(watermark.id, { startTime, endTime })
   }
 
-  // 使用useMemo缓存URL，避免频繁重新创建
-  const watermarkImageUrl = useMemo(() => {
+  // 管理水印图片URL
+  useEffect(() => {
     if (watermark.image) {
-      return URL.createObjectURL(watermark.image)
+      const url = URL.createObjectURL(watermark.image)
+      setWatermarkImageUrl(url)
+      return () => {
+        URL.revokeObjectURL(url)
+      }
+    } else {
+      setWatermarkImageUrl(null)
     }
-    return null
   }, [watermark.image])
 
-  const videoUrl = useMemo(() => {
-    if (videoFile) {
-      return URL.createObjectURL(videoFile)
-    }
-    return null
-  }, [videoFile])
-
-  // 清理URL，避免内存泄漏
+  // 管理视频URL
   useEffect(() => {
-    return () => {
-      if (watermarkImageUrl) {
-        URL.revokeObjectURL(watermarkImageUrl)
+    if (videoFile) {
+      const url = URL.createObjectURL(videoFile)
+      setVideoUrl(url)
+      return () => {
+        URL.revokeObjectURL(url)
       }
-      if (videoUrl) {
-        URL.revokeObjectURL(videoUrl)
-      }
+    } else {
+      setVideoUrl(null)
     }
-  }, [watermarkImageUrl, videoUrl])
+  }, [videoFile])
 
   return (
     <div className="p-4 bg-[var(--bg-secondary)] rounded-xl">
@@ -114,9 +116,16 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
 
       {/* 水印预览区域 */}
       {isEditing && videoFile && watermarkImageUrl && (
-        <div className="mb-4 relative">
+        <div className="mb-4 relative watermark-edit-preview">
           <div className="relative bg-gray-800 rounded-lg overflow-hidden" style={{ height: '200px' }}>
             <video
+              ref={(ref) => {
+                if (ref) {
+                  ref.onloadedmetadata = () => {
+                    setVideoResolution({ width: ref.videoWidth, height: ref.videoHeight })
+                  }
+                }
+              }}
               src={videoUrl || ''}
               className="w-full h-full object-contain"
               muted
@@ -126,8 +135,49 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
               alt="水印预览"
               className="absolute cursor-move"
               style={{
-                left: `${localPosition.x}px`,
-                top: `${localPosition.y}px`,
+                left: `${(() => {
+                  const videoContainer = document.querySelector('.watermark-edit-preview')
+                  if (!videoContainer) return localPosition.x
+                  const videoElement = videoContainer.querySelector('video') as HTMLVideoElement
+                  if (!videoElement) return localPosition.x
+                  const videoRect = videoElement.getBoundingClientRect()
+                  const containerRect = videoContainer.getBoundingClientRect()
+                  const actualVideoWidth = videoResolution.width || videoRect.width
+                  const actualVideoHeight = videoResolution.height || videoRect.height
+                  const videoAspect = actualVideoWidth / actualVideoHeight
+                  const containerAspect = videoRect.width / videoRect.height
+                  let displayWidth, offsetX
+                  if (videoAspect > containerAspect) {
+                    displayWidth = videoRect.width
+                    offsetX = 0
+                  } else {
+                    displayWidth = videoRect.height * videoAspect
+                    offsetX = (videoRect.width - displayWidth) / 2
+                  }
+                  const scale = displayWidth / actualVideoWidth
+                  return offsetX + localPosition.x * scale
+                })()}px`,
+                top: `${(() => {
+                  const videoContainer = document.querySelector('.watermark-edit-preview')
+                  if (!videoContainer) return localPosition.y
+                  const videoElement = videoContainer.querySelector('video') as HTMLVideoElement
+                  if (!videoElement) return localPosition.y
+                  const videoRect = videoElement.getBoundingClientRect()
+                  const actualVideoWidth = videoResolution.width || videoRect.width
+                  const actualVideoHeight = videoResolution.height || videoRect.height
+                  const videoAspect = actualVideoWidth / actualVideoHeight
+                  const containerAspect = videoRect.width / videoRect.height
+                  let displayHeight, offsetY
+                  if (videoAspect > containerAspect) {
+                    displayHeight = videoRect.width / videoAspect
+                    offsetY = (videoRect.height - displayHeight) / 2
+                  } else {
+                    displayHeight = videoRect.height
+                    offsetY = 0
+                  }
+                  const scale = displayHeight / actualVideoHeight
+                  return offsetY + localPosition.y * scale
+                })()}px`,
                 width: `${localSize}%`,
                 opacity: localOpacity / 100,
                 maxWidth: '100px',
@@ -135,13 +185,37 @@ const WatermarkItemComponent: React.FC<WatermarkItemProps> = ({
               }}
               onMouseDown={(e) => {
                 e.preventDefault()
-                const startX = e.clientX - localPosition.x
-                const startY = e.clientY - localPosition.y
+                const videoContainer = (e.target as HTMLElement).closest('.watermark-edit-preview')
+                if (!videoContainer) return
+                const videoElement = videoContainer.querySelector('video') as HTMLVideoElement
+                if (!videoElement) return
+                const videoRect = videoElement.getBoundingClientRect()
+                const actualVideoWidth = videoResolution.width || videoRect.width
+                const actualVideoHeight = videoResolution.height || videoRect.height
+                const videoAspect = actualVideoWidth / actualVideoHeight
+                const containerAspect = videoRect.width / videoRect.height
+                let displayWidth, displayHeight, offsetX, offsetY
+                if (videoAspect > containerAspect) {
+                  displayWidth = videoRect.width
+                  displayHeight = videoRect.width / videoAspect
+                  offsetX = 0
+                  offsetY = (videoRect.height - displayHeight) / 2
+                } else {
+                  displayWidth = videoRect.height * videoAspect
+                  displayHeight = videoRect.height
+                  offsetX = (videoRect.width - displayWidth) / 2
+                  offsetY = 0
+                }
+                const scale = displayWidth / actualVideoWidth
+                const startX = e.clientX - localPosition.x * scale - offsetX
+                const startY = e.clientY - localPosition.y * scale - offsetY
 
                 const handleMouseMove = (moveEvent: MouseEvent) => {
-                  const newX = Math.max(0, moveEvent.clientX - startX)
-                  const newY = Math.max(0, moveEvent.clientY - startY)
-                  handlePositionChange({ x: newX, y: newY })
+                  const displayX = Math.max(0, moveEvent.clientX - startX - offsetX)
+                  const displayY = Math.max(0, moveEvent.clientY - startY - offsetY)
+                  const actualX = Math.max(0, Math.min(displayX / scale, actualVideoWidth))
+                  const actualY = Math.max(0, Math.min(displayY / scale, actualVideoHeight))
+                  handlePositionChange({ x: actualX, y: actualY })
                 }
 
                 const handleMouseUp = () => {

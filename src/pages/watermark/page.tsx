@@ -22,6 +22,7 @@ const WatermarkPage: React.FC = () => {
     initStore,
     setSelectedFile,
     addWatermark,
+    updateWatermark,
     removeWatermark,
     setOutputDir,
     setOutputFileName,
@@ -153,8 +154,7 @@ const WatermarkPage: React.FC = () => {
             onAddWatermark={addWatermark}
             onRemoveWatermark={removeWatermark}
             onUpdateWatermark={(id, updates) => {
-              // 更新水印逻辑
-              console.log('Update watermark:', id, updates)
+              updateWatermark(id, updates)
             }}
             onOutputFileNameChange={setOutputFileName}
             onProcess={processWatermarks}
