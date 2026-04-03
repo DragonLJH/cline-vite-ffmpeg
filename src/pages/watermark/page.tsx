@@ -17,6 +17,7 @@ const WatermarkPage: React.FC = () => {
     outputDir,
     outputFileName,
     processedFile,
+    processedFilePath,
     isProcessing,
     progress,
     initStore,
@@ -167,6 +168,7 @@ const WatermarkPage: React.FC = () => {
           <ResultDisplay
             originalFile={selectedFile}
             processedFile={processedFile}
+            processedFilePath={processedFilePath}
             onDownload={handleDownload}
             onReprocess={handleReprocess}
           />

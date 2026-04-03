@@ -180,7 +180,7 @@ class FfmpegManager {
       size?: number
     }>,
     pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
-  ): Promise<TaskResult> {
+  ): Promise<TaskResult & { outputPath?: string }> {
     const taskId = `task_${Date.now()}`
 
     const task = videoService.addWatermarks({
@@ -193,7 +193,7 @@ class FfmpegManager {
 
     try {
       await task.result
-      return { taskId, success: true }
+      return { taskId, success: true, outputPath: output }
     } catch (err: any) {
       return { taskId, success: false, error: err.message }
     }

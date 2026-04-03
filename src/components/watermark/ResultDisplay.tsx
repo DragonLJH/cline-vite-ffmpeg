@@ -4,6 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation'
 interface ResultDisplayProps {
   originalFile: File | null
   processedFile: File | null
+  processedFilePath?: string | null
   onDownload: () => void
   onReprocess: () => void
 }
@@ -11,25 +12,44 @@ interface ResultDisplayProps {
 const ResultDisplay: React.FC<ResultDisplayProps> = ({
   originalFile,
   processedFile,
+  processedFilePath,
   onDownload,
   onReprocess
 }) => {
   const { t } = useTranslation()
   
-  // 使用useMemo缓存URL.createObjectURL的结果，避免频繁重新创建
+  // 使用useMemo缓存视频URL，避免频繁重新创建
   const originalVideoUrl = useMemo(() => {
     if (originalFile) {
+      // 在Electron中，File对象有path属性指向本地文件
+      const filePath = (originalFile as any).path
+      if (filePath) {
+        // 使用自定义的local-file://协议处理本地文件
+        const normalizedPath = filePath.replace(/\\/g, '/')
+        const encodedPath = encodeURIComponent(normalizedPath)
+        return `local-file:///${encodedPath}`
+      }
+      // 如果没有path属性，使用Object URL
       return URL.createObjectURL(originalFile)
     }
     return null
   }, [originalFile])
   
   const processedVideoUrl = useMemo(() => {
+    // 如果有文件路径，使用自定义的local-file://协议
+    if (processedFilePath) {
+      // 将Windows路径转换为local-file:// URL
+      // 使用encodeURIComponent处理中文和空格等特殊字符
+      const normalizedPath = processedFilePath.replace(/\\/g, '/')
+      const encodedPath = encodeURIComponent(normalizedPath)
+      return `local-file:///${encodedPath}`
+    }
+    // 如果没有文件路径但有File对象，使用Object URL
     if (processedFile) {
       return URL.createObjectURL(processedFile)
     }
     return null
-  }, [processedFile])
+  }, [processedFile, processedFilePath])
   
   // 清理URL.createObjectURL创建的URL，避免内存泄漏
   React.useEffect(() => {
@@ -37,7 +57,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       if (originalVideoUrl) {
         URL.revokeObjectURL(originalVideoUrl)
       }
-      if (processedVideoUrl) {
+      // 只有当URL是Object URL时才需要清理
+      if (processedVideoUrl && processedVideoUrl.startsWith('blob:')) {
         URL.revokeObjectURL(processedVideoUrl)
       }
     }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, protocol } from 'electron'
 import { ipcHandlerManager, createBrowserWindow } from './manager'
 import { appConfig } from './config'
 
@@ -20,7 +20,17 @@ function createWindow() {
 ipcHandlerManager.registerAllChannels()
 
 // 应用生命周期事件
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  // 注册自定义协议 local-file://
+  protocol.registerFileProtocol('local-file', (request, callback) => {
+    // 移除协议前缀并解码路径（处理中文、空格等特殊字符）
+    const encodedPath = request.url.replace('local-file://', '')
+    const filePath = decodeURIComponent(encodedPath)
+    callback({ path: filePath })
+  })
+  
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

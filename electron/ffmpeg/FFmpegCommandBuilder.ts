@@ -180,33 +180,33 @@ export class FFmpegCommandBuilder {
 
       let overlayFilter = ''
       
-      // 如果有 size 参数，先用 scale 调整水印大小
-      if (wm.size !== undefined && wm.size !== 100) {
-        const scaleRatio = wm.size / 100
-        const scaleLabel = `[wm${index}]`
-        
-        // 构建 scale 滤镜
-        const scaleFilter = `[${inputIndex}:v]scale=iw*${scaleRatio}:ih*${scaleRatio}${scaleLabel}`
-        
-        // 构建 overlay 滤镜
-        if (wm.start !== undefined && wm.end !== undefined) {
-          overlayFilter = `${prevLabel}${scaleLabel}overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
-        } else {
-          overlayFilter = `${prevLabel}${scaleLabel}overlay=x=${x}:y=${y}${outputLabel}`
-        }
-        
-        filterParts.push(scaleFilter)
-        filterParts.push(overlayFilter)
+    // 如果有 size 参数，先用 scale 调整水印大小
+    if (wm.size !== undefined && wm.size !== 100) {
+      const scaleRatio = wm.size / 100
+      const scaleLabel = `[wm${index}]`
+      
+      // 构建 scale 滤镜
+      const scaleFilter = `[${inputIndex}:v]scale=iw*${scaleRatio}:ih*${scaleRatio}${scaleLabel}`
+      
+      // 构建 overlay 滤镜
+      if (wm.start !== undefined && wm.end !== undefined) {
+        overlayFilter = `${prevLabel}${scaleLabel}overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
       } else {
-        // 直接使用 overlay，不需要 scale
-        if (wm.start !== undefined && wm.end !== undefined) {
-          overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
-        } else {
-          overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=x=${x}:y=${y}${outputLabel}`
-        }
-        
-        filterParts.push(overlayFilter)
+        overlayFilter = `${prevLabel}${scaleLabel}overlay=x=${x}:y=${y}${outputLabel}`
       }
+      
+      filterParts.push(scaleFilter)
+      filterParts.push(overlayFilter)
+    } else {
+      // 直接使用 overlay，需要指定输入流
+      if (wm.start !== undefined && wm.end !== undefined) {
+        overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
+      } else {
+        overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=x=${x}:y=${y}${outputLabel}`
+      }
+      
+      filterParts.push(overlayFilter)
+    }
     })
 
     // 将所有滤镜组合成 filter_complex

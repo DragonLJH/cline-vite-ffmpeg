@@ -69,7 +69,12 @@ interface ElectronAPI {
       start?: string
       end?: string
       size?: number
-    }>) => Promise<{ taskId: string; success: boolean; error?: string }>
+    }>) => Promise<{ 
+      taskId: string; 
+      success: boolean; 
+      error?: string;
+      outputPath?: string;  // 输出文件路径
+    }>
 
     // 获取媒体信息
     getMediaInfo: (input: string) => Promise<{

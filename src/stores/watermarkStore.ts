@@ -55,6 +55,7 @@ interface WatermarkState {
   outputDir: string | null     // 输出目录
   outputFileName: string | null // 输出文件名
   processedFile: File | null
+  processedFilePath: string | null  // 处理后的文件路径
   isProcessing: boolean
   progress: number
   initStore: () => Promise<void>
@@ -94,6 +95,7 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
   outputDir: null,
   outputFileName: null,
   processedFile: null,
+  processedFilePath: null,
   isProcessing: false,
   progress: 0,
 
@@ -263,12 +265,14 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
 
       console.log('[WatermarkStore] All watermarks processed successfully')
 
-      // 处理成功，创建处理后的文件对象
-      const processedBlob = new Blob([], { type: 'video/mp4' })
-      const processedFile = new File([processedBlob], outputFileName)
-
+      // 使用返回的输出路径
+      const outputPath = result.outputPath || finalOutputPath
+      console.log('[WatermarkStore] Processed file saved to:', outputPath)
+      
+      // 直接保存文件路径，不需要将文件读入内存
       set({
-        processedFile: processedFile,
+        processedFile: new File([''], outputFileName, { type: 'video/mp4' }),
+        processedFilePath: outputPath,
         isProcessing: false,
         progress: 100
       })
@@ -290,6 +294,7 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
       outputDir: null,
       outputFileName: null,
       processedFile: null,
+      processedFilePath: null,
       isProcessing: false,
       progress: 0
     })
