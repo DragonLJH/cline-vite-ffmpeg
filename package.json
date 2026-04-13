@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/electron/main.js",
   "scripts": {
+    "build:mcp:dev": "tsc -p mcp-manager/tsconfig.build.json",
     "build:dev": "tsc -p build/tsconfig.build.json",
     "dev": "yarn build:dev && node build/.out/dev.js",
     "build": "vite build",
@@ -53,9 +54,11 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.11.0",
+    "zod": "3",
     "zustand": "^5.0.9"
   }
 }

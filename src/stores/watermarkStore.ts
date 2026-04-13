@@ -1,15 +1,40 @@
 import { create } from 'zustand'
 
-// 水印项接口
-interface WatermarkItem {
+// 水印类型
+type WatermarkType = 'image' | 'text'
+
+// 基础水印接口
+interface BaseWatermarkItem {
   id: string                    // 唯一标识
-  image: File | null            // 水印图片
+  type: WatermarkType           // 水印类型
   position: { x: number; y: number }  // 位置坐标
   opacity: number               // 透明度 (0-100)
-  size: number                  // 大小百分比 (10-200)
   startTime: number             // 开始时间（秒）
   endTime: number               // 结束时间（秒）
 }
+
+// 图片水印
+interface ImageWatermarkItem extends BaseWatermarkItem {
+  type: 'image'
+  image: File | null            // 水印图片
+  size: number                  // 大小百分比 (10-200)
+}
+
+// 文字水印
+interface TextWatermarkItem extends BaseWatermarkItem {
+  type: 'text'
+  text: string                  // 文字内容
+  fontSize: number              // 字体大小 (12-120)
+  fontColor: string             // 字体颜色 (如: '#FFFFFF', 'white')
+  fontFamily?: string           // 字体名称 (如: 'Arial', 'SimHei')
+  backgroundColor?: string      // 背景颜色 (可选)
+  borderWidth?: number          // 边框宽度 (可选, 0-10)
+  borderColor?: string          // 边框颜色 (可选)
+  shadow?: boolean              // 是否添加阴影
+}
+
+// 水印项联合类型
+type WatermarkItem = ImageWatermarkItem | TextWatermarkItem
 
 // 资源管理配置
 const RESOURCE_CONFIG = {
@@ -170,7 +195,7 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     const id = generateId()
     console.log('[WatermarkStore] addWatermark called with:', watermark)
     set((state) => ({
-      watermarks: [...state.watermarks, { ...watermark, id }]
+      watermarks: [...state.watermarks, { ...watermark, id } as WatermarkItem]
     }))
   },
 
@@ -234,16 +259,42 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
 
       // 构建多水印参数数组
       const watermarkParams = watermarks.map((watermark) => {
-        const watermarkImagePath = (watermark.image as any).path || watermark.image?.name
-        return {
-          image: watermarkImagePath,
+        const baseParams = {
+          type: watermark.type,
           x: watermark.position.x,
           y: watermark.position.y,
           start: watermark.startTime.toString(),
           end: watermark.endTime.toString(),
-          size: watermark.size
+          opacity: watermark.opacity
         }
-      }).filter(wm => wm.image) // 过滤掉没有图片的水印
+
+        if (watermark.type === 'image') {
+          const watermarkImagePath = (watermark.image as any).path || watermark.image?.name
+          return {
+            ...baseParams,
+            image: watermarkImagePath,
+            size: watermark.size
+          }
+        } else {
+          // 文字水印
+          return {
+            ...baseParams,
+            text: watermark.text,
+            fontSize: watermark.fontSize,
+            fontColor: watermark.fontColor,
+            fontFamily: watermark.fontFamily,
+            backgroundColor: watermark.backgroundColor,
+            borderWidth: watermark.borderWidth,
+            borderColor: watermark.borderColor,
+            shadow: watermark.shadow
+          }
+        }
+      }).filter(wm => {
+        if (wm.type === 'image') {
+          return !!(wm as any).image
+        }
+        return !!(wm as any).text
+      })
 
       console.log('[WatermarkStore] Processing all watermarks in one call:', {
         input: inputPath,
@@ -300,3 +351,13 @@ export const useWatermarkStore = create<WatermarkState>((set, get) => ({
     })
   }
 }))
+
+// 导出类型供其他模块使用
+export type {
+  WatermarkType,
+  BaseWatermarkItem,
+  ImageWatermarkItem,
+  TextWatermarkItem,
+  WatermarkItem,
+  VideoInfo
+}

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import { WatermarkItem } from './ffmpeg/FFmpegCommandBuilder'
 
 // 自定义 API 接口定义
 interface ElectronAPI {
@@ -66,14 +67,7 @@ interface ElectronAPI {
     screenshotAccurate: (input: string, time: string, output: string) => void
     cut: (input: string, output: string, start: string, duration: string, precise?: boolean) => void
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number) => void
-    addWatermarks: (input: string, output: string, watermarks: Array<{
-      image: string
-      x?: number
-      y?: number
-      start?: string
-      end?: string
-      size?: number
-    }>) => void
+    addWatermarks: (input: string, output: string, watermarks: WatermarkItem[]) => void
     getMediaInfo: (input: string) => Promise<any>
     onProgress: (callback: (data: any) => void) => void
   }
@@ -142,15 +136,8 @@ const electronAPI: ElectronAPI = {
     addWatermark: (input: string, output: string, watermarkImage: string, x?: number, y?: number, startTime?: string, endTime?: string, size?: number) => 
       ipcRenderer.invoke("ffmpeg:addWatermark", input, output, watermarkImage, x, y, startTime, endTime, size),
     
-    // 添加多个视频水印（一次性处理）
-    addWatermarks: (input: string, output: string, watermarks: Array<{
-      image: string
-      x?: number
-      y?: number
-      start?: string
-      end?: string
-      size?: number
-    }>) => 
+    // 添加多个视频水印（一次性处理，支持图片和文字混合）
+    addWatermarks: (input: string, output: string, watermarks: WatermarkItem[]) =>
       ipcRenderer.invoke("ffmpeg:addWatermarks", input, output, watermarks),
     
     // 获取媒体信息

@@ -1,6 +1,7 @@
 
 import { videoService, TranscodeParams, MediaInfo } from "../services/videoService"
 import { FFmpegProgress } from "../ffmpeg/progressParser"
+import { WatermarkItem } from "../ffmpeg/FFmpegCommandBuilder"
 
 // 统一返回类型
 interface TaskResult {
@@ -162,23 +163,16 @@ class FfmpegManager {
   }
 
   /**
-   * 添加多个视频水印（一次性处理）
+   * 添加多个视频水印（一次性处理，支持图片和文字混合）
    * @param input 输入文件路径
    * @param output 输出文件路径
-   * @param watermarks 水印数组
+   * @param watermarks 水印数组（支持图片和文字类型）
    * @param pCallback 进度回调
    */
   async addWatermarks(
     input: string,
     output: string,
-    watermarks: Array<{
-      image: string
-      x?: number
-      y?: number
-      start?: string
-      end?: string
-      size?: number
-    }>,
+    watermarks: WatermarkItem[],
     pCallback?: (res: { taskId: string; progress: FFmpegProgress }) => void
   ): Promise<TaskResult & { outputPath?: string }> {
     const taskId = `task_${Date.now()}`

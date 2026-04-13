@@ -26,8 +26,9 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       if (filePath) {
         // 使用自定义的local-file://协议处理本地文件
         const normalizedPath = filePath.replace(/\\/g, '/')
-        const encodedPath = encodeURIComponent(normalizedPath)
-        return `local-file:///${encodedPath}`
+        // 确保路径以/开头
+        const pathWithPrefix = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`
+        return `local-file://${pathWithPrefix}`
       }
       // 如果没有path属性，使用Object URL
       return URL.createObjectURL(originalFile)
@@ -39,13 +40,20 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     // 如果有文件路径，使用自定义的local-file://协议
     if (processedFilePath) {
       // 将Windows路径转换为local-file:// URL
-      // 使用encodeURIComponent处理中文和空格等特殊字符
+      // 路径需要以 / 开头，如 local-file:///C:/Users/...
       const normalizedPath = processedFilePath.replace(/\\/g, '/')
-      const encodedPath = encodeURIComponent(normalizedPath)
-      return `local-file:///${encodedPath}`
+      // 确保路径以/开头
+      const pathWithPrefix = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`
+      return `local-file://${pathWithPrefix}`
     }
     // 如果没有文件路径但有File对象，使用Object URL
     if (processedFile) {
+      const filePath = (processedFile as any).path
+      if (filePath) {
+        const normalizedPath = filePath.replace(/\\/g, '/')
+        const pathWithPrefix = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`
+        return `local-file://${pathWithPrefix}`
+      }
       return URL.createObjectURL(processedFile)
     }
     return null

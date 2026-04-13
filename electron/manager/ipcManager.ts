@@ -4,6 +4,7 @@ import { createBrowserWindow } from './windowManager'
 import { ffmpegManager } from './ffmpegManager'
 import { FFmpegProgress } from "../ffmpeg/progressParser"
 import { MediaInfo } from "../services/videoService"
+import { WatermarkItem } from "../ffmpeg/FFmpegCommandBuilder"
 import { getAppPaths, getDefaultOutputPath, generateOutputFilename } from '../config'
 
 /**
@@ -239,16 +240,9 @@ export class IPCHandlerManager {
       type: 'handle'
     })
 
-    // 添加多个视频水印（一次性处理）
+    // 添加多个视频水印（一次性处理，支持图片和文字混合）
     this.addChannel('ffmpeg:addWatermarks', {
-      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarks: Array<{
-        image: string
-        x?: number
-        y?: number
-        start?: string
-        end?: string
-        size?: number
-      }>) => {
+      handler: async (event: Electron.IpcMainInvokeEvent, input: string, output: string, watermarks: WatermarkItem[]) => {
         return await ffmpegManager.addWatermarks(input, output, watermarks, ({
           taskId,
           progress

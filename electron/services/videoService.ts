@@ -1,4 +1,4 @@
-import { FFmpegCommandBuilder } from "../ffmpeg/FFmpegCommandBuilder"
+import { FFmpegCommandBuilder, WatermarkItem } from "../ffmpeg/FFmpegCommandBuilder"
 import { FFmpegExecutor } from "../ffmpeg/FFmpegExecutor"
 import { FFmpegProgress } from "../ffmpeg/progressParser"
 
@@ -169,14 +169,23 @@ export const videoService = {
             if (params.performance.maxThreads) {
                 builder.threads(params.performance.maxThreads)
             }
-            
+
             // 如果指定了preset，添加编码预设
             if (params.performance.preset) {
                 builder.preset(params.performance.preset)
             }
-            
+
             // 添加性能优化参数
             builder.performanceOptions()
+        } else {
+            // 默认使用中等质量预设
+            builder.preset('medium')
+        }
+
+        // 如果没有指定视频编解码器，设置默认质量参数
+        // 不强制指定 libx264，让 FFmpeg 自动选择系统可用的编码器
+        if (!params.video?.codec) {
+            builder.custom('-crf', '23')  // 默认质量级别
         }
 
         builder.output(params.output)
@@ -261,20 +270,13 @@ export const videoService = {
     },
 
     // ========================
-    // 多水印处理（一次性处理所有水印）
+    // 多水印处理（一次性处理所有水印，支持图片和文字混合）
     // ========================
     addWatermarks(
         params: {
             input: string
             output: string
-            watermarks: Array<{
-                image: string
-                x?: number
-                y?: number
-                start?: string
-                end?: string
-                size?: number
-            }>
+            watermarks: WatermarkItem[]
             performance?: {
                 maxThreads?: number
                 preset?: string
@@ -298,7 +300,16 @@ export const videoService = {
                 builder.preset(params.performance.preset)
             }
             builder.performanceOptions()
+        } else {
+            // 默认使用中等质量预设，平衡速度和质量
+            builder.preset('medium')
         }
+
+        // 设置输出视频编码参数
+        // 使用 -c:v copy 无法与 filter_complex 一起使用，需要重新编码
+        // 不指定具体编码器，让 FFmpeg 自动选择默认编码器
+        // 如果 FFmpeg 支持 libx264，它会优先使用；否则会使用其他可用编码器
+        builder.custom('-crf', '23')  // 默认质量级别（平衡质量和文件大小）
 
         builder.output(params.output)
 

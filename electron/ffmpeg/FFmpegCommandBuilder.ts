@@ -1,7 +1,75 @@
+// ========================
+// 类型定义
+// ========================
+
+/** 输入项类型 */
 type InputItem = {
   file: string
   options: string[]
 }
+
+/** ID3 标签元数据类型 */
+type ID3Tags = {
+  title?: string
+  artist?: string
+  album?: string
+  genre?: string
+  year?: string
+}
+
+/** 文字水印参数类型（用于 textWatermark 方法） */
+export type TextWatermarkParams = {
+  text: string
+  x?: number
+  y?: number
+  fontSize?: number
+  fontColor?: string
+  fontFamily?: string
+  start?: string
+  end?: string
+  opacity?: number
+  backgroundColor?: string
+  borderWidth?: number
+  borderColor?: string
+  shadow?: boolean
+}
+
+/** 图片水印项类型（用于 watermarks 方法） */
+export type ImageWatermarkItem = {
+  type: 'image'
+  image: string
+  x?: number
+  y?: number
+  start?: string
+  end?: string
+  size?: number
+  opacity?: number
+}
+
+/** 文字水印项类型（用于 watermarks 方法） */
+export type TextWatermarkItem = {
+  type: 'text'
+  text: string
+  x?: number
+  y?: number
+  start?: string
+  end?: string
+  fontSize?: number
+  fontColor?: string
+  fontFamily?: string
+  opacity?: number
+  backgroundColor?: string
+  borderWidth?: number
+  borderColor?: string
+  shadow?: boolean
+}
+
+/** 水印项联合类型（用于 watermarks 方法） */
+export type WatermarkItem = ImageWatermarkItem | TextWatermarkItem
+
+// ========================
+// FFmpeg 命令构建器类
+// ========================
 
 export class FFmpegCommandBuilder {
 
@@ -150,63 +218,238 @@ export class FFmpegCommandBuilder {
     return this
   }
 
-  // 多水印支持（一次性处理所有水印，使用 filter_complex）
-  watermarks(watermarks: Array<{
-    image: string
-    x?: number
-    y?: number
-    start?: string
-    end?: string
-    size?: number
-  }>) {
+  // 文字水印（使用 drawtext 滤镜）
+  textWatermark(params: TextWatermarkParams) {
+    const {
+      text,
+      x = 10,
+      y = 10,
+      fontSize = 24,
+      fontColor = 'white',
+      fontFamily,
+      start,
+      end,
+      opacity = 100,
+      backgroundColor,
+      borderWidth,
+      borderColor,
+      shadow = false
+    } = params
+
+    // 构建 drawtext 滤镜字符串
+    let drawtextFilter = `drawtext=text='${text.replace(/'/g, "\\'")}'`
+
+    // 位置和大小
+    drawtextFilter += `:x=${x}:y=${y}:fontsize=${fontSize}`
+
+    // 处理颜色，支持十六进制和颜色名称
+    let colorValue = fontColor
+    if (fontColor.startsWith('#')) {
+      // 将 #RRGGBB 转换为 0xRRGGBB 格式
+      colorValue = `0x${fontColor.slice(1)}`
+    }
+
+    // 透明度处理 (FFmpeg 使用 0.0-1.0 或 @alpha 后缀)
+    const alphaValue = opacity / 100
+    drawtextFilter += `:fontcolor=${colorValue}@${alphaValue}`
+
+    // 字体
+    if (fontFamily) {
+      drawtextFilter += `:font=${fontFamily}`
+    }
+
+    // 背景框
+    if (backgroundColor) {
+      let bgColor = backgroundColor
+      if (backgroundColor.startsWith('#')) {
+        bgColor = `0x${backgroundColor.slice(1)}`
+      }
+      drawtextFilter += `:box=1:boxcolor=${bgColor}@${alphaValue}`
+    }
+
+    // 边框
+    if (borderWidth && borderWidth > 0) {
+      drawtextFilter += `:borderw=${borderWidth}`
+      if (borderColor) {
+        let bdColor = borderColor
+        if (borderColor.startsWith('#')) {
+          bdColor = `0x${borderColor.slice(1)}`
+        }
+        drawtextFilter += `:bordercolor=${bdColor}`
+      }
+    }
+
+    // 阴影
+    if (shadow) {
+      drawtextFilter += `:shadowcolor=black@0.5:shadowx=2:shadowy=2`
+    }
+
+    // 时间控制
+    if (start !== undefined && end !== undefined) {
+      drawtextFilter += `:enable='between(t,${start},${end})'`
+    }
+
+    this.filters.push(drawtextFilter)
+
+    return this
+  }
+
+  // 多水印支持（一次性处理所有水印，使用 filter_complex，支持图片和文字混合）
+  watermarks(watermarks: WatermarkItem[]) {
     if (watermarks.length === 0) {
       return this
     }
 
-    // 为每个水印添加图片输入
-    watermarks.forEach((wm) => {
+    // 分离图片水印和文字水印
+    const imageWatermarks = watermarks.filter(wm => wm.type === 'image') as ImageWatermarkItem[]
+    const textWatermarks = watermarks.filter(wm => wm.type === 'text') as TextWatermarkItem[]
+
+    // 为每个图片水印添加图片输入
+    imageWatermarks.forEach((wm) => {
       this.imageInput(wm.image)
     })
 
     // 构建 filter_complex 字符串
     const filterParts: string[] = []
-    
-    watermarks.forEach((wm, index) => {
-      const x = wm.x ?? 10
-      const y = wm.y ?? 10
-      const inputIndex = index + 1 // 水印图片输入索引（从1开始，0是视频）
-      const prevLabel = index === 0 ? '[0:v]' : `[v${index}]`
-      const outputLabel = index === watermarks.length - 1 ? '' : `[v${index + 1}]`
 
-      let overlayFilter = ''
-      
-    // 如果有 size 参数，先用 scale 调整水印大小
-    if (wm.size !== undefined && wm.size !== 100) {
-      const scaleRatio = wm.size / 100
-      const scaleLabel = `[wm${index}]`
-      
-      // 构建 scale 滤镜
-      const scaleFilter = `[${inputIndex}:v]scale=iw*${scaleRatio}:ih*${scaleRatio}${scaleLabel}`
-      
-      // 构建 overlay 滤镜
-      if (wm.start !== undefined && wm.end !== undefined) {
-        overlayFilter = `${prevLabel}${scaleLabel}overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
+    // 当前处理的流标签
+    let currentLabel = '[0:v]'
+    let imageInputIndex = 1 // 图片水印输入索引（从1开始，0是视频）
+
+    // 处理所有水印（保持传入顺序）
+    watermarks.forEach((wm, index) => {
+      const isLast = index === watermarks.length - 1
+      const outputLabel = isLast ? '' : `[v${index + 1}]`
+
+      if (wm.type === 'image') {
+        const imageWm = wm as ImageWatermarkItem
+        const x = imageWm.x ?? 10
+        const y = imageWm.y ?? 10
+        const opacity = imageWm.opacity ?? 100
+        const alphaValue = opacity / 100
+
+        let overlayFilter = ''
+        let processedLabel = ''
+
+        // 如果有 size 参数，先用 scale 调整水印大小
+        if (imageWm.size !== undefined && imageWm.size !== 100) {
+          const scaleRatio = imageWm.size / 100
+          const scaleLabel = `[wm${index}]`
+
+          // 构建 scale 滤镜
+          const scaleFilter = `[${imageInputIndex}:v]scale=iw*${scaleRatio}:ih*${scaleRatio}${scaleLabel}`
+          filterParts.push(scaleFilter)
+          processedLabel = scaleLabel
+        } else {
+          processedLabel = `[${imageInputIndex}:v]`
+        }
+
+        // 如果设置了透明度（不是100%），添加格式转换和颜色通道混合器
+        if (opacity !== 100) {
+          const formatLabel = `[wmf${index}]`
+          const alphaLabel = `[wma${index}]`
+
+          // 转换为RGBA格式以支持透明度
+          filterParts.push(`${processedLabel}format=rgba${formatLabel}`)
+
+          // 使用colorchannelmixer调整透明度
+          // 格式: rr:rg:rb:ra:gr:gg:gb:ga:br:bg:bb:ba:ar:ag:ab:aa
+          // aa (alpha to alpha) 控制输出alpha通道
+          filterParts.push(`${formatLabel}colorchannelmixer=aa=${alphaValue}${alphaLabel}`)
+          processedLabel = alphaLabel
+        }
+
+        // 构建 overlay 滤镜
+        if (imageWm.start !== undefined && imageWm.end !== undefined) {
+          overlayFilter = `${currentLabel}${processedLabel}overlay=enable='between(t,${imageWm.start},${imageWm.end})':x=${x}:y=${y}${outputLabel}`
+        } else {
+          overlayFilter = `${currentLabel}${processedLabel}overlay=x=${x}:y=${y}${outputLabel}`
+        }
+
+        filterParts.push(overlayFilter)
+        imageInputIndex++
       } else {
-        overlayFilter = `${prevLabel}${scaleLabel}overlay=x=${x}:y=${y}${outputLabel}`
+        // 文字水印
+        const textWm = wm as TextWatermarkItem
+        const {
+          text,
+          x = 10,
+          y = 10,
+          fontSize = 24,
+          fontColor = 'white',
+          fontFamily,
+          start,
+          end,
+          opacity = 100,
+          backgroundColor,
+          borderWidth,
+          borderColor,
+          shadow
+        } = textWm
+
+        // 构建 drawtext 滤镜
+        let drawtextFilter = `${currentLabel}drawtext=text='${text.replace(/'/g, "\\'")}'`
+
+        // 位置和大小
+        drawtextFilter += `:x=${x}:y=${y}:fontsize=${fontSize}`
+
+        // 处理颜色
+        let colorValue = fontColor
+        if (fontColor.startsWith('#')) {
+          colorValue = `0x${fontColor.slice(1)}`
+        }
+
+        const alphaValue = opacity / 100
+        drawtextFilter += `:fontcolor=${colorValue}@${alphaValue}`
+
+        // 字体
+        if (fontFamily) {
+          drawtextFilter += `:font=${fontFamily}`
+        }
+
+        // 背景框
+        if (backgroundColor) {
+          let bgColor = backgroundColor
+          if (backgroundColor.startsWith('#')) {
+            bgColor = `0x${backgroundColor.slice(1)}`
+          }
+          drawtextFilter += `:box=1:boxcolor=${bgColor}@${alphaValue}`
+        }
+
+        // 边框
+        if (borderWidth && borderWidth > 0) {
+          drawtextFilter += `:borderw=${borderWidth}`
+          if (borderColor) {
+            let bdColor = borderColor
+            if (borderColor.startsWith('#')) {
+              bdColor = `0x${borderColor.slice(1)}`
+            }
+            drawtextFilter += `:bordercolor=${bdColor}`
+          }
+        }
+
+        // 阴影
+        if (shadow) {
+          drawtextFilter += `:shadowcolor=black@0.5:shadowx=2:shadowy=2`
+        }
+
+        // 时间控制
+        if (start !== undefined && end !== undefined) {
+          drawtextFilter += `:enable='between(t,${start},${end})'`
+        }
+
+        // 添加输出标签
+        if (!isLast) {
+          drawtextFilter += outputLabel
+        }
+
+        filterParts.push(drawtextFilter)
       }
-      
-      filterParts.push(scaleFilter)
-      filterParts.push(overlayFilter)
-    } else {
-      // 直接使用 overlay，需要指定输入流
-      if (wm.start !== undefined && wm.end !== undefined) {
-        overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=enable='between(t,${wm.start},${wm.end})':x=${x}:y=${y}${outputLabel}`
-      } else {
-        overlayFilter = `${prevLabel}[${inputIndex}:v]overlay=x=${x}:y=${y}${outputLabel}`
+
+      // 更新当前标签
+      if (!isLast) {
+        currentLabel = `[v${index + 1}]`
       }
-      
-      filterParts.push(overlayFilter)
-    }
     })
 
     // 将所有滤镜组合成 filter_complex
@@ -236,13 +479,7 @@ export class FFmpegCommandBuilder {
     return this
   }
 
-  id3(tags: {
-    title?: string
-    artist?: string
-    album?: string
-    genre?: string
-    year?: string
-  }) {
+  id3(tags: ID3Tags) {
 
     if (tags.title) this.metadata("title", tags.title)
     if (tags.artist) this.metadata("artist", tags.artist)

@@ -2,16 +2,27 @@ import React, { useState, useEffect, useMemo } from 'react'
 
 interface WatermarkPreviewProps {
   videoFile: File | null
-  watermarkImage: File | null
+  // 图片水印属性
+  watermarkImage?: File | null
+  size?: number
+  // 文字水印属性
+  watermarkText?: string
+  fontSize?: number
+  fontColor?: string
+  fontFamily?: string
+  backgroundColor?: string
+  borderWidth?: number
+  borderColor?: string
+  shadow?: boolean
+  // 通用属性
   opacity: number
-  size: number
-  position: { 
+  position: {
     displayX: number      // 显示坐标（用于预览）
     displayY: number
     actualX: number       // 实际分辨率坐标（用于 FFmpeg）
     actualY: number
   }
-  onPositionChange: (position: { 
+  onPositionChange: (position: {
     displayX: number
     displayY: number
     actualX: number
@@ -20,18 +31,29 @@ interface WatermarkPreviewProps {
   videoWidth?: number
   videoHeight?: number
   onVideoLoaded?: (width: number, height: number) => void
+  // 水印类型
+  type?: 'image' | 'text'
 }
 
 const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
   videoFile,
   watermarkImage,
+  size = 50,
+  watermarkText = '',
+  fontSize = 24,
+  fontColor = '#FFFFFF',
+  fontFamily = '',
+  backgroundColor = '',
+  borderWidth = 0,
+  borderColor = '#000000',
+  shadow = false,
   opacity,
-  size,
   position,
   onPositionChange,
   videoWidth,
   videoHeight,
-  onVideoLoaded
+  onVideoLoaded,
+  type = 'image'
 }) => {
   const [isDraggingWatermark, setIsDraggingWatermark] = useState(false)
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
@@ -142,9 +164,11 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
     return { x: displayX, y: displayY }
   }
 
-  if (!videoFile || !watermarkImage) {
+  if (!videoFile || (type === 'image' && !watermarkImage)) {
     return null
   }
+
+  // 对于文字水印，只需要视频文件即可显示预览
 
   return (
     <div className="bg-[var(--bg-card)] p-8 rounded-2xl shadow-[var(--shadow-lg)] border border-[var(--border-primary)]">
@@ -172,44 +196,71 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
         />
         
         {/* 水印预览叠加层 */}
-        <div 
+        <div
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          style={{ 
+          style={{
             opacity: opacity / 100,
           }}
         >
-          {watermarkImageUrl && !watermarkImageError ? (
-            <img
-              src={watermarkImageUrl}
-              alt="水印预览"
-              className="absolute cursor-move pointer-events-auto"
+          {type === 'image' && (
+            <>
+              {watermarkImageUrl && !watermarkImageError ? (
+                <img
+                  src={watermarkImageUrl}
+                  alt="水印预览"
+                  className="absolute cursor-move pointer-events-auto"
+                  style={{
+                    left: `${getDisplayPosition().x}px`,
+                    top: `${getDisplayPosition().y}px`,
+                    width: `${size}%`,
+                    maxWidth: '200px'
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    setIsDraggingWatermark(true)
+                  }}
+                  onError={() => setWatermarkImageError(true)}
+                />
+              ) : (
+                <div
+                  className="absolute cursor-move pointer-events-auto bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-sm"
+                  style={{
+                    left: `${getDisplayPosition().x}px`,
+                    top: `${getDisplayPosition().y}px`,
+                    width: '100px',
+                    height: '100px'
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    setIsDraggingWatermark(true)
+                  }}
+                >
+                  水印图片加载失败
+                </div>
+              )}
+            </>
+          )}
+          {type === 'text' && (
+            <div
+              className="absolute cursor-move pointer-events-auto select-none whitespace-nowrap"
               style={{
                 left: `${getDisplayPosition().x}px`,
                 top: `${getDisplayPosition().y}px`,
-                width: `${size}%`,
-                maxWidth: '200px'
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault()
-                setIsDraggingWatermark(true)
-              }}
-              onError={() => setWatermarkImageError(true)}
-            />
-          ) : (
-            <div 
-              className="absolute cursor-move pointer-events-auto bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-sm"
-              style={{
-                left: `${getDisplayPosition().x}px`,
-                top: `${getDisplayPosition().y}px`,
-                width: '100px',
-                height: '100px'
+                fontSize: `${fontSize}px`,
+                color: fontColor,
+                fontFamily: fontFamily || 'inherit',
+                backgroundColor: backgroundColor || 'transparent',
+                padding: backgroundColor ? '4px 8px' : '0',
+                borderRadius: '4px',
+                border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : 'none',
+                textShadow: shadow ? '2px 2px 4px rgba(0,0,0,0.5)' : 'none'
               }}
               onMouseDown={(e) => {
                 e.preventDefault()
                 setIsDraggingWatermark(true)
               }}
             >
-              水印图片加载失败
+              {watermarkText || '示例文字'}
             </div>
           )}
         </div>
